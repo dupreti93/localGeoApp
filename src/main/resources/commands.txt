@@ -1,0 +1,3 @@
+rsync -avz -e "ssh -i 'Nearby App Key Pair.pem'" /Users/divyansh_upreti/IdeaProjects/localGeoApp ec2-user@3.142.252.220:/home/ec2-user/;
+
+ssh -i Nearby App Key Pair.pem ec2-user@3.142.252.220

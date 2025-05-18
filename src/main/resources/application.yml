@@ -1,0 +1,10 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: localGeoApp
+
+aws:
+  dynamodb:
+    region: us-east-2 # Change to your AWS region
