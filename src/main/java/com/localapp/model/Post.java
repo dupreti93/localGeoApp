@@ -30,6 +30,7 @@ public class Post {
     private String timestamp;
     private String geoHash;
     private boolean shared;
+    private String placeId;
     @Size(max = 50, message = "Type must be 50 characters or less")
     private String type;
     private transient List<Like> likes;

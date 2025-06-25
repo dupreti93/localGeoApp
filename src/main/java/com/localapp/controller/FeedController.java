@@ -34,13 +34,17 @@ public class FeedController {
     public List<Post> getSharedPins(
             @RequestParam double lat,
             @RequestParam double lon,
-            @RequestParam(defaultValue = "5.0") double radiusMiles,
+            @RequestParam(required = false) Double radiusMiles,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "all") String type) {
         logger.info("Fetching shared pins: lat={}, lon={}, radius={}, page={}, size={}", lat, lon, radiusMiles, page, size);
-        List<Post> nearbyPosts = postRepository.findPostsNear(lat, lon, radiusMiles);
-        List<Post> filteredPosts = nearbyPosts.stream()
+
+        List<Post> posts = (radiusMiles != null)
+                ? postRepository.findPostsNear(lat, lon, radiusMiles)
+                : postRepository.findAll();
+
+        List<Post> filteredPosts = posts.stream()
                 .filter(post -> "pin".equals(post.getCategory()) && post.isShared())
                 .filter(post -> "all".equals(type) || type.equals(post.getType()))
                 .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
