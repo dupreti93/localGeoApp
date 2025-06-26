@@ -31,8 +31,6 @@ public class Post {
     private String geoHash;
     private boolean shared;
     private String placeId;
-    @Size(max = 50, message = "Type must be 50 characters or less")
-    private String type;
     private transient List<Like> likes;
     private transient List<Comment> comments;
 
@@ -84,9 +82,9 @@ public class Post {
     public boolean isShared() { return shared; }
     public void setShared(boolean shared) { this.shared = shared; }
 
-    @DynamoDbAttribute("type")
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    @DynamoDbAttribute("placeId")
+    public String getPlaceId() { return placeId; }
+    public void setPlaceId(String placeId) { this.placeId = placeId; }
 
     public List<Like> getLikes() {
         return likes;

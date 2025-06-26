@@ -37,7 +37,7 @@ public class FeedController {
             @RequestParam(required = false) Double radiusMiles,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "all") String type) {
+            @RequestParam(required = false) String userId) {
         logger.info("Fetching shared pins: lat={}, lon={}, radius={}, page={}, size={}", lat, lon, radiusMiles, page, size);
 
         List<Post> posts = (radiusMiles != null)
@@ -46,7 +46,7 @@ public class FeedController {
 
         List<Post> filteredPosts = posts.stream()
                 .filter(post -> "pin".equals(post.getCategory()) && post.isShared())
-                .filter(post -> "all".equals(type) || type.equals(post.getType()))
+                .filter(post -> userId == null || !post.getUserId().equals(userId))
                 .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
                 .skip((long) page * size)
                 .limit(size)
