@@ -1,8 +1,6 @@
 package com.localapp.config;
 
-import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,7 +13,10 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-// Note: Removed @Component
+/**
+ * Filter to implement rate limiting per IP address.
+ * Limits each IP to 100 requests per minute.
+ */
 public class RateLimitFilter implements Filter {
     private static final Logger logger = LoggerFactory.getLogger(RateLimitFilter.class);
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
@@ -27,7 +28,11 @@ public class RateLimitFilter implements Filter {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
         String clientIp = httpRequest.getRemoteAddr();
-        Bucket bucket = buckets.computeIfAbsent(clientIp, k -> createBucket());
+        Bucket bucket = buckets.computeIfAbsent(clientIp, k -> Bucket.builder()
+                .addLimit(limit -> limit
+                        .capacity(100)
+                        .refillGreedy(100, Duration.ofMinutes(1)))
+                .build());
 
         if (bucket.tryConsume(1)) {
             chain.doFilter(request, response);
@@ -38,8 +43,13 @@ public class RateLimitFilter implements Filter {
         }
     }
 
-    private Bucket createBucket() {
-        Bandwidth limit = Bandwidth.classic(100, Refill.greedy(100, Duration.ofMinutes(1)));
-        return Bucket.builder().addLimit(limit).build();
+    @Override
+    public void init(FilterConfig filterConfig) {
+        // No initialization needed
+    }
+
+    @Override
+    public void destroy() {
+        buckets.clear();
     }
 }

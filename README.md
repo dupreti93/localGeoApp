@@ -10,6 +10,7 @@ mvn clean install - after adding any new dependency to pom.xml
 mvn clean package
 
 ### Sync code changes:  
+Open Ubuntu terminal and run:
 rsync -avz -e "ssh -i 'Nearby App Key Pair.pem'" /Users/divyansh_upreti/IdeaProjects/localGeoApp ec2-user@18.224.30.8:/home/ec2-user/
 
 # EC-2 instance:
