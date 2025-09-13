@@ -73,8 +73,8 @@ public class SecurityConfig {
                     auth
                             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                             .requestMatchers("/api/auth/**").permitAll()
-                            .requestMatchers("/api/posts/mapbox/tiles/**").permitAll()
-                            .requestMatchers("/api/posts/clear-cache").permitAll()
+                            .requestMatchers("/api/events/**").permitAll()  // Public access to events
+                            .requestMatchers("/api/itinerary/**").authenticated()  // Requires login
                             .anyRequest().authenticated();
                 })
                 .addFilterBefore(loggingFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -87,10 +87,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         logger.info("Configuring CORS with allowed origins, methods, and headers");
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://18.224.30.8:3000", "https://your-cloudfront-url"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // Remove unused origins
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control", "X-Requested-With"));
-        configuration.setExposedHeaders(Arrays.asList("Access-Control-Allow-Origin", "Access-Control-Allow-Methods"));
+        configuration.setExposedHeaders(Arrays.asList("Access-Control-Allow-Origin", "Access-Control-Allow-Methods", "Authorization"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
