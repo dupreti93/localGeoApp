@@ -3,6 +3,31 @@
   @apply min-h-screen bg-gray-50;
 }
 
+/* Icon styling */
+.heading-icon {
+  @apply inline-block w-8 h-8 mr-3 text-gray-600;
+}
+
+.small-icon {
+  @apply w-5 h-5 mr-2 text-gray-600;
+}
+
+.dropdown-icon {
+  @apply w-4 h-4 mr-2 text-gray-500;
+}
+
+.button-icon {
+  @apply ml-2 w-5 h-5;
+}
+
+.button-icon-left {
+  @apply mr-2 w-5 h-5;
+}
+
+.check-icon {
+  @apply w-6 h-6;
+}
+
 /* Step 1-2: Initial filter screen */
 .home-initial {
   @apply max-w-2xl mx-auto px-4 py-12;
@@ -14,6 +39,64 @@
 
 .home-initial-card {
   @apply bg-white shadow-sm rounded-md p-6 border border-gray-200;
+}
+
+/* Input styling */
+.input-group {
+  @apply mb-6;
+}
+
+.input-label {
+  @apply flex items-center text-lg font-medium text-gray-700 mb-2;
+}
+
+.input-field {
+  @apply w-full px-4 py-3 text-lg border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition-colors;
+}
+
+.input-icon-container {
+  @apply absolute right-3 top-1/2 -translate-y-1/2 text-gray-600;
+}
+
+.city-dropdown {
+  @apply absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto;
+}
+
+.city-dropdown-item {
+  @apply p-3 hover:bg-gray-50 cursor-pointer flex items-center border-b border-gray-100 last:border-0;
+}
+
+.city-dropdown-empty {
+  @apply p-3 text-center text-gray-500;
+}
+
+/* Button styling */
+.button-group {
+  @apply mt-6;
+}
+
+.button-full {
+  @apply w-full flex items-center justify-center px-4 py-3 text-white rounded-md text-lg font-medium transition-all;
+}
+
+.button-active {
+  @apply bg-gray-600 hover:bg-gray-700 shadow-md;
+}
+
+.button-disabled {
+  @apply bg-gray-300 cursor-not-allowed;
+}
+
+.button-row {
+  @apply flex flex-row justify-between;
+}
+
+.button-back {
+  @apply w-1/2 mr-2 flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all text-lg font-medium;
+}
+
+.button-next {
+  @apply w-1/2 ml-2 flex items-center justify-center px-4 py-3 text-white rounded-md text-lg font-medium transition-all;
 }
 
 /* Step 3: Results page layout */
@@ -80,11 +163,15 @@
 }
 
 .home-column-header {
-  @apply flex justify-between items-center;
+  @apply flex justify-between items-center mb-4;
 }
 
 .home-column-title {
-  @apply text-xl font-semibold text-gray-800 flex items-center;
+  @apply text-xl font-semibold text-gray-800 flex items-center bg-white p-3 rounded-lg shadow-sm;
+}
+
+.home-column-title-city {
+  @apply text-gray-600;
 }
 
 /* Event cards */
@@ -161,6 +248,14 @@
 }
 
 /* Map container */
+.map-container {
+  @apply h-[600px] lg:h-[700px] rounded-lg overflow-hidden;
+}
+
+.map-sticky-container {
+  @apply sticky top-28;
+}
+
 .home-map-container {
   @apply lg:col-span-2 rounded-md overflow-hidden h-[calc(100vh-180px)] shadow-sm border border-gray-200 bg-white sticky top-32;
 }
@@ -184,6 +279,10 @@
 
 .pagination-button-active {
   @apply bg-gray-700 text-white;
+}
+
+.pagination-toggle-button {
+  @apply px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md font-medium transition-all shadow-sm;
 }
 
 /* Success message */

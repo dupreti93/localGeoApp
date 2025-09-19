@@ -39,9 +39,7 @@ const SearchHeader = ({
       <div className="home-search-container">
         <div className="flex flex-col lg:flex-row items-center gap-4">
           <div className="flex-1">
-            <h1 className="home-search-title">
-              Events in {searchCity}
-            </h1>
+            {/* Removed the duplicate city name heading */}
           </div>
 
           {/* Persistent Search Controls */}
@@ -58,7 +56,7 @@ const SearchHeader = ({
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
               <div className="home-search-icon">
-                <LocationIcon />
+                <LocationIcon className="w-5 h-5 text-gray-500" />
               </div>
 
               {/* City Dropdown for Step 3 */}
@@ -93,56 +91,48 @@ const SearchHeader = ({
                 min={new Date().toISOString().split('T')[0]}
               />
               <div className="home-search-icon">
-                <CalendarIcon />
+                <CalendarIcon className="w-5 h-5 text-gray-500" />
               </div>
             </div>
 
             {/* Artist Filter Dropdown */}
             <div className="home-search-input-container" ref={artistDropdownRef}>
-              <div
-                className="home-search-input cursor-pointer flex items-center justify-between"
-                onClick={() => setShowArtistDropdown(!showArtistDropdown)}
-              >
-                <span className={artistFilter ? 'text-gray-900' : 'text-gray-400'}>
-                  {artistFilter || 'Filter by Artist'}
-                </span>
-                <FilterIcon className="w-4 h-4 ml-1 text-gray-500" />
+              <input
+                type="text"
+                value={artistFilter}
+                onChange={(e) => setArtistFilter(e.target.value)}
+                onClick={() => setShowArtistDropdown(true)}
+                className="home-search-input"
+                placeholder="Filter by artist"
+              />
+              <div className="home-search-icon">
+                <FilterIcon className="w-5 h-5 text-gray-500" />
               </div>
 
-              {showArtistDropdown && (
-                <div className="filter-dropdown max-h-64 overflow-y-auto">
-                  <div className="sticky top-0 bg-white border-b border-gray-200">
+              {showArtistDropdown && availableArtists.length > 0 && (
+                <div className="filter-dropdown">
+                  <button
+                    className="filter-dropdown-item font-medium text-gray-700"
+                    onClick={() => {
+                      setArtistFilter('');
+                      setShowArtistDropdown(false);
+                    }}
+                  >
+                    Clear Filter
+                  </button>
+                  {availableArtists.map((artist, index) => (
                     <button
+                      key={index}
                       type="button"
                       onClick={() => {
-                        setArtistFilter('');
+                        setArtistFilter(artist);
                         setShowArtistDropdown(false);
                       }}
-                      className="filter-dropdown-item bg-gray-50 w-full text-left"
+                      className="filter-dropdown-item"
                     >
-                      <span className="font-medium">All Artists</span>
+                      {artist}
                     </button>
-                  </div>
-
-                  {availableArtists.length > 0 ? (
-                    availableArtists.map((artist, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => {
-                          setArtistFilter(artist);
-                          setShowArtistDropdown(false);
-                        }}
-                        className={`filter-dropdown-item ${artistFilter === artist ? 'bg-gray-100' : ''}`}
-                      >
-                        {artist}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3 py-2 text-gray-500 text-center text-sm">
-                      No artists found
-                    </div>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
@@ -151,7 +141,7 @@ const SearchHeader = ({
               onClick={handleSearch}
               className="home-search-button"
             >
-              <SearchIcon className="w-5 h-5 mr-1" />
+              <SearchIcon className="w-5 h-5 mr-2" />
               Search
             </button>
           </div>

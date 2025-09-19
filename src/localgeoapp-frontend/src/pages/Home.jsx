@@ -9,7 +9,7 @@ import EventList from './Home/EventList';
 import EventMap, { MapUpdater } from './Home/EventMap';
 import SearchHeader from './Home/SearchHeader';
 import { LoadingState, ErrorState, EmptyState, SuccessToast } from './shared/StateComponents';
-import { LocationIcon, CalendarIcon, SearchIcon, CheckIcon, ArrowRightIcon, ArrowLeftIcon } from './shared/Icons'; // Added SearchIcon, CheckIcon, and ArrowRightIcon
+import { LocationIcon, CalendarIcon, SearchIcon, CheckIcon, ArrowRightIcon, ArrowLeftIcon } from './shared/Icons';
 import '../styles/Home.css';
 
 const DEFAULT_CENTER = [40.74, -73.98]; // NYC default
@@ -166,14 +166,13 @@ const Home = () => {
 
   // Update displayed events when page changes
   useEffect(() => {
-    if (currentPage >= totalPages) {
-      setDisplayedEvents(events);
-    } else {
-      const startIndex = (currentPage - 1) * EVENTS_PER_PAGE;
-      const endIndex = startIndex + EVENTS_PER_PAGE;
-      setDisplayedEvents(events.slice(startIndex, endIndex));
-    }
-  }, [events, currentPage, totalPages]);
+    if (events.length === 0) return;
+
+    const startIndex = (currentPage - 1) * EVENTS_PER_PAGE;
+    const endIndex = startIndex + EVENTS_PER_PAGE;
+    setDisplayedEvents(events.slice(startIndex, endIndex));
+
+  }, [events, currentPage]);
 
   // Fetch itinerary when logged in and have city/date
   useEffect(() => {
@@ -464,13 +463,13 @@ const Home = () => {
       {step === 1 && (
         <div className="home-initial">
           <h2 className="home-initial-title">
-            <SearchIcon className="inline-block w-8 h-8 mr-3 text-blue-600" />
+            <SearchIcon className="heading-icon" />
             Discover Events
           </h2>
           <div className="home-initial-card">
-            <div className="input-group mb-6">
-              <label htmlFor="city" className="flex items-center text-lg font-medium text-gray-700 mb-2">
-                <LocationIcon className="w-5 h-5 mr-2 text-blue-600" />
+            <div className="input-group">
+              <label htmlFor="city" className="input-label">
+                <LocationIcon className="small-icon" />
                 Where are you going?
               </label>
               <div className="relative">
@@ -482,28 +481,28 @@ const Home = () => {
                   onFocus={handleCityFocusInResults}
                   placeholder="Enter a city name"
                   autoComplete="off"
-                  className="w-full px-4 py-3 text-lg border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                  className="input-field"
                 />
                 {city && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600">
-                    <CheckIcon className="w-6 h-6" />
+                  <div className="input-icon-container">
+                    <CheckIcon className="check-icon" />
                   </div>
                 )}
 
                 {showCityDropdown && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  <div className="city-dropdown">
                     {filteredCities.map((cityName, index) => (
                       <div
                         key={index}
-                        className="p-3 hover:bg-blue-50 cursor-pointer flex items-center border-b border-gray-100 last:border-0"
+                        className="city-dropdown-item"
                         onClick={() => handleCitySelectInResults(cityName)}
                       >
-                        <LocationIcon className="w-4 h-4 mr-2 text-gray-500" />
+                        <LocationIcon className="dropdown-icon" />
                         {cityName}
                       </div>
                     ))}
                     {filteredCities.length === 0 && (
-                      <div className="p-3 text-center text-gray-500">
+                      <div className="city-dropdown-empty">
                         No cities found
                       </div>
                     )}
@@ -511,18 +510,14 @@ const Home = () => {
                 )}
               </div>
             </div>
-            <div className="button-group mt-6">
+            <div className="button-group">
               <button
                 onClick={() => handleNextStep(2)}
                 disabled={!city}
-                className={`w-full flex items-center justify-center px-4 py-3 text-white rounded-md text-lg font-medium transition-all ${
-                  city
-                    ? 'bg-blue-600 hover:bg-blue-700 shadow-md'
-                    : 'bg-gray-300 cursor-not-allowed'
-                }`}
+                className={`button-full ${city ? 'button-active' : 'button-disabled'}`}
               >
                 Next
-                <ArrowRightIcon className="ml-2 w-5 h-5" />
+                <ArrowRightIcon className="button-icon" />
               </button>
             </div>
           </div>
@@ -533,13 +528,13 @@ const Home = () => {
       {step === 2 && (
         <div className="home-initial">
           <h2 className="home-initial-title">
-            <CalendarIcon className="inline-block w-8 h-8 mr-3 text-blue-600" />
+            <CalendarIcon className="heading-icon" />
             When are you going?
           </h2>
           <div className="home-initial-card">
-            <div className="input-group mb-6">
-              <label htmlFor="date" className="flex items-center text-lg font-medium text-gray-700 mb-2">
-                <CalendarIcon className="w-5 h-5 mr-2 text-blue-600" />
+            <div className="input-group">
+              <label htmlFor="date" className="input-label">
+                <CalendarIcon className="small-icon" />
                 Select a date
               </label>
               <div className="relative">
@@ -548,35 +543,31 @@ const Home = () => {
                   id="date"
                   value={date}
                   onChange={handleDateChange}
-                  className="w-full px-4 py-3 text-lg border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                  className="input-field"
                   min={new Date().toISOString().split('T')[0]}
                 />
                 {date && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600">
-                    <CheckIcon className="w-6 h-6" />
+                  <div className="input-icon-container">
+                    <CheckIcon className="check-icon" />
                   </div>
                 )}
               </div>
             </div>
-            <div className="button-group mt-6 flex flex-row justify-between">
+            <div className="button-group button-row">
               <button
                 onClick={() => handleNextStep(1)}
-                className="w-1/2 mr-2 flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all text-lg font-medium"
+                className="button-back"
               >
-                <ArrowLeftIcon className="mr-2 w-5 h-5" />
+                <ArrowLeftIcon className="button-icon-left" />
                 Back
               </button>
               <button
                 onClick={() => handleNextStep(3)}
                 disabled={!date}
-                className={`w-1/2 ml-2 flex items-center justify-center px-4 py-3 text-white rounded-md text-lg font-medium transition-all ${
-                  date
-                    ? 'bg-blue-600 hover:bg-blue-700 shadow-md'
-                    : 'bg-gray-300 cursor-not-allowed'
-                }`}
+                className={`button-next ${date ? 'button-active' : 'button-disabled'}`}
               >
                 Explore
-                <SearchIcon className="ml-2 w-5 h-5" />
+                <SearchIcon className="button-icon" />
               </button>
             </div>
           </div>
@@ -609,11 +600,11 @@ const Home = () => {
           <div className="home-results-grid">
             <div className="home-grid">
               <div className="lg:col-span-1">
-                <div className="home-column-header mb-4">
-                  <h3 className="home-column-title flex items-center bg-white p-3 rounded-lg shadow-sm">
-                    <CalendarIcon className="w-5 h-5 mr-2 text-blue-600" />
+                <div className="home-column-header">
+                  <h3 className="home-column-title">
+                    <CalendarIcon className="small-icon" />
                     <span className="font-medium">
-                      <span className="text-blue-600">{searchCity}</span> • {new Date(searchDate).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'})}
+                      <span className="home-column-title-city">{searchCity}</span> • {new Date(searchDate).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'})}
                     </span>
                   </h3>
                 </div>
@@ -631,10 +622,30 @@ const Home = () => {
                 {loading && <LoadingState />}
                 {error && <ErrorState message={error} />}
                 {displayedEvents.length === 0 && !loading && <EmptyState message="No events found. Try different criteria." />}
+
+                {/* Simple Show More/Less Pagination */}
+                {events.length > 10 && !loading && (
+                  <div className="pagination-container">
+                    <button
+                      onClick={() => {
+                        if (displayedEvents.length === events.length) {
+                          // Show only first 10 events
+                          setDisplayedEvents(events.slice(0, 10));
+                        } else {
+                          // Show all events
+                          setDisplayedEvents(events);
+                        }
+                      }}
+                      className="pagination-toggle-button"
+                    >
+                      {displayedEvents.length === events.length ? 'Show Less' : 'Show All Events'}
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="lg:col-span-2">
-                <div className="sticky top-28">
-                  <div className="map-container h-[600px] lg:h-[700px] rounded-lg overflow-hidden">
+                <div className="map-sticky-container">
+                  <div className="map-container">
                     <EventMap
                       events={displayedEvents}
                       center={mapCenter}
