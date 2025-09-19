@@ -1,0 +1,66 @@
+/* TravelMap.css */
+.travel-map-container {
+  height: 40vh;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  position: relative; /* Added for absolute positioning of map style selector */
+}
+
+/* Map style selector styling */
+.map-style-selector {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000; /* Ensure it's above the map */
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  padding: 3px 0;
+}
+
+.map-style-dropdown {
+  border: none;
+  background: white;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  color: #333;
+  min-width: 140px;
+  border-radius: 4px;
+}
+
+.map-style-dropdown:hover {
+  background-color: #f8f9fa;
+}
+
+/* Popup styles */
+.map-popup-content {
+  text-align: center;
+}
+
+.map-popup-title {
+  font-weight: 700;
+}
+
+.map-popup-venue {
+  font-size: 0.875rem;
+}
+
+.map-popup-date {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.map-popup-link {
+  color: #4b5563;
+  font-size: 0.875rem;
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.map-popup-link:hover {
+  text-decoration: underline;
+}

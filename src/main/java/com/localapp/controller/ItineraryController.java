@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/itinerary")
@@ -37,12 +36,12 @@ public class ItineraryController {
     public ResponseEntity<Void> addOrUpdateItinerary(@RequestBody Itinerary itinerary) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
-        // Validate eventId is a UUID
-        try {
-            UUID.fromString(itinerary.getEventId());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "eventId must be a valid UUID");
+
+        // Validate eventId is not null or empty
+        if (itinerary.getEventId() == null || itinerary.getEventId().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "eventId cannot be null or empty");
         }
+
         // Validate and normalize status
         ItineraryStatus status;
         try {

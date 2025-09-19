@@ -1,0 +1,12 @@
+/* Map styles overrides */
+/* Removed grayscale filter to allow colorful map styles */
+
+/* Make controls and attribution more subtle */
+.leaflet-control-container .leaflet-control {
+  opacity: 0.8;
+}
+
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.7) !important;
+  font-size: 10px !important;
+}

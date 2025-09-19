@@ -1,0 +1,25 @@
+.app-container {
+  min-height: 100vh;
+  background-image: url('/assets/ny-skyline.jpg'); /* NYC skyline */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #f5f5f5; /* Fallback: light gray */
+}
+
+.app-overlay {
+  min-height: 100vh;
+  background-color: rgba(0, 0, 0, 0.2); /* Lighter overlay for better contrast */
+}
+
+/* Gradient background class */
+.app-gradient-bg {
+  background-image: linear-gradient(to bottom right, #eff6ff, #e0e7ff, #f5f3ff);
+  min-height: 100vh;
+}
+
+.app-flex-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
