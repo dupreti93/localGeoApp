@@ -1,5 +1,5 @@
 import React from 'react';
-import { LocationIcon, CalendarIcon, ArrowLeftIcon, ArrowRightIcon, BookmarkIcon, CheckIcon, ImageIcon } from '../shared/Icons';
+import { LocationIcon, CalendarIcon, ArrowLeftIcon, ArrowRightIcon, PlusIcon, ImageIcon } from '../shared/Icons';
 
 const EventList = ({
   events,
@@ -13,7 +13,9 @@ const EventList = ({
   formatDate,
   totalPages,
   currentPage,
-  setCurrentPage
+  setCurrentPage,
+  savedEvents = [], // Prop for saved events
+  onAddEvent // New prop for add event handler
 }) => {
   // Make sure we have events to display
   const eventsToDisplay = events || [];
@@ -33,6 +35,11 @@ const EventList = ({
       }
     }
     return formatDate(date);
+  };
+
+  // Check if an event is already saved
+  const isEventSaved = (eventId) => {
+    return savedEvents && savedEvents.some(saved => saved.id === eventId || saved.eventId === eventId);
   };
 
   return (
@@ -124,20 +131,19 @@ const EventList = ({
               </a>
 
               <div className="event-action-container">
-                <button
-                  onClick={() => onEventAction(event.id, 'interested')}
-                  className="event-action-button"
-                >
-                  <BookmarkIcon className="w-4 h-4 mr-1" />
-                  Interested
-                </button>
-                <button
-                  onClick={() => onEventAction(event.id, 'going')}
-                  className="event-action-button"
-                >
-                  <CheckIcon className="w-4 h-4 mr-1" />
-                  Going
-                </button>
+                {isEventSaved(event.id) ? (
+                  <div className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded text-center w-full">
+                    Added to My Events
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {e.stopPropagation(); onAddEvent(event.id)}}
+                    className="event-action-button w-full"
+                  >
+                    <PlusIcon className="w-4 h-4 mr-1" />
+                    Add to My Events
+                  </button>
+                )}
               </div>
             </div>
           )}

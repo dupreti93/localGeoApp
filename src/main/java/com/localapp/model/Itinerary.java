@@ -5,20 +5,27 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
 @Data
 @DynamoDbBean
 public class Itinerary {
+    private String itineraryId;
     private String userId;
+    private String title;
     private String city;
-    private String date; // ISO format yyyy-MM-dd
-    private String eventId;
-    private ItineraryStatus status;
+    private String startDate;
+    private String endDate;
+    private String description;
+    private List<DayPlan> dayPlans;
+    private String notes;
+    private LocalDateTime createdAt;
 
-    public enum ItineraryStatus {
-        GOING, INTERESTED;
-        public static ItineraryStatus fromString(String value) {
-            return value == null ? null : valueOf(value.trim().toUpperCase());
-        }
+    public Itinerary() {
+        this.itineraryId = UUID.randomUUID().toString();
+        this.createdAt = LocalDateTime.now();
     }
 
     @DynamoDbPartitionKey
@@ -26,17 +33,6 @@ public class Itinerary {
     public void setUserId(String userId) { this.userId = userId; }
 
     @DynamoDbSortKey
-    public String getEventId() { return eventId; }
-    public void setEventId(String eventId) { this.eventId = eventId; }
-
-    public String getCity() { return city; }
-    public void setCity(String city) { this.city = city; }
-
-    public String getDate() { return date; }
-    public void setDate(String date) { this.date = date; }
-
-    public ItineraryStatus getStatus() { return status; }
-    public void setStatus(ItineraryStatus status) { this.status = status; }
-    // For DynamoDB string mapping
-    public void setStatus(String status) { this.status = ItineraryStatus.fromString(status); }
+    public String getItineraryId() { return itineraryId; }
+    public void setItineraryId(String itineraryId) { this.itineraryId = itineraryId; }
 }

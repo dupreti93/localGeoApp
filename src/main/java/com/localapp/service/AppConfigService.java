@@ -21,6 +21,21 @@ public class AppConfigService {
         return getConfigValue("MAPBOX_KEY");
     }
 
+    @Cacheable(value = "apiKeys", key = "'geminiApiKey'")
+    public String getGeminiApiKey() {
+        return getConfigValue("GEMINI_API_KEY");
+    }
+
+    @Cacheable(value = "apiKeys", key = "'openaiApiKey'")
+    public String getOpenAIApiKey() {
+        return getConfigValue("OPENAI_API_KEY");
+    }
+
+    @Cacheable(value = "apiKeys", key = "'ticketmasterApiKey'")
+    public String getTicketmasterApiKey() {
+        return getConfigValue("TM_API_KEY");
+    }
+
     private String getConfigValue(String key) {
         try (AppConfigClient client = AppConfigClient.create()) {
             GetConfigurationRequest request = GetConfigurationRequest.builder()
@@ -35,24 +50,6 @@ public class AppConfigService {
             return node.get(key).asText();
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch " + key, e);
-        }
-    }
-
-
-    public String getTicketmasterApiKey() {
-        try (AppConfigClient client = AppConfigClient.create()) {
-            GetConfigurationRequest request = GetConfigurationRequest.builder()
-                    .application(application)
-                    .environment(environment)
-                    .configuration(configProfile)
-                    .clientId(clientId)
-                    .build();
-            GetConfigurationResponse response = client.getConfiguration(request);
-            String json = response.content().asUtf8String();
-            JsonNode node = mapper.readTree(json);
-            return node.get("TM_API_KEY").asText();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch Ticketmaster API key", e);
         }
     }
 }

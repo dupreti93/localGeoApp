@@ -1,11 +1,10 @@
 package com.localapp.controller;
 
+import com.localapp.model.Event;
 import com.localapp.service.EventService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
@@ -44,5 +43,21 @@ public class EventController {
             date = java.time.LocalDate.now().toString();
         }
         return eventService.fetchEvents(city, date);
+    }
+
+    /**
+     * Fetches a specific event by its ID.
+     *
+     * @param id The Ticketmaster event ID
+     * @return The event details or 404 if not found
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<Event> getEventById(@PathVariable String id) {
+        Event event = eventService.getEventById(id);
+        if (event != null) {
+            return ResponseEntity.ok(event);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

@@ -17,23 +17,6 @@ const SearchHeader = ({
   setArtistFilter,
   availableArtists
 }) => {
-  const [showArtistDropdown, setShowArtistDropdown] = useState(false);
-  const artistDropdownRef = useRef(null);
-
-  // Close artist dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (artistDropdownRef.current && !artistDropdownRef.current.contains(event.target)) {
-        setShowArtistDropdown(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [artistDropdownRef]);
-
   return (
     <div className="home-search-header">
       <div className="home-search-container">
@@ -95,46 +78,19 @@ const SearchHeader = ({
               </div>
             </div>
 
-            {/* Artist Filter Dropdown */}
-            <div className="home-search-input-container" ref={artistDropdownRef}>
+            {/* Keyword Search - Replace Artist Filter Dropdown with direct search */}
+            <div className="home-search-input-container">
               <input
                 type="text"
                 value={artistFilter}
                 onChange={(e) => setArtistFilter(e.target.value)}
-                onClick={() => setShowArtistDropdown(true)}
                 className="home-search-input"
-                placeholder="Filter by artist"
+                placeholder="Search by artist or event"
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
               <div className="home-search-icon">
                 <FilterIcon className="w-5 h-5 text-gray-500" />
               </div>
-
-              {showArtistDropdown && availableArtists.length > 0 && (
-                <div className="filter-dropdown">
-                  <button
-                    className="filter-dropdown-item font-medium text-gray-700"
-                    onClick={() => {
-                      setArtistFilter('');
-                      setShowArtistDropdown(false);
-                    }}
-                  >
-                    Clear Filter
-                  </button>
-                  {availableArtists.map((artist, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => {
-                        setArtistFilter(artist);
-                        setShowArtistDropdown(false);
-                      }}
-                      className="filter-dropdown-item"
-                    >
-                      {artist}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             <button

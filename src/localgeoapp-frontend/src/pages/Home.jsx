@@ -8,8 +8,10 @@ import { API_BASE_URL } from '../common/Constants';
 import EventList from './Home/EventList';
 import EventMap, { MapUpdater } from './Home/EventMap';
 import SearchHeader from './Home/SearchHeader';
+import EventsTray from './Home/EventsTray'; // Import the new EventsTray component
 import { LoadingState, ErrorState, EmptyState, SuccessToast } from './shared/StateComponents';
-import { LocationIcon, CalendarIcon, SearchIcon, CheckIcon, ArrowRightIcon, ArrowLeftIcon } from './shared/Icons';
+import { LocationIcon, CalendarIcon, SearchIcon, CheckIcon, ArrowRightIcon, ArrowLeftIcon, ImageIcon } from './shared/Icons';
+import { updateSavedEvents } from './shared/BottomTray';
 import '../styles/Home.css';
 
 const DEFAULT_CENTER = [40.74, -73.98]; // NYC default
@@ -38,6 +40,8 @@ const Home = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState({});
   const [artistFilter, setArtistFilter] = useState('');
   const [availableArtists, setAvailableArtists] = useState([]);
+  // New state for saved events
+  const [savedEvents, setSavedEvents] = useState([]);
 
   const EVENTS_PER_PAGE = 15;
   const POPULAR_CITIES = [
@@ -457,6 +461,62 @@ const Home = () => {
     }
   }, [artistFilter, events, currentPage, totalPages]);
 
+  // New function to handle saving events
+  const handleAddEvent = (eventId) => {
+    if (!token || !user) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    const processedEventId = eventId?.toString() || eventId;
+
+    // Find the full event data
+    const eventData = events.find(e => e.id === processedEventId);
+    if (!eventData) return;
+
+    // Check if the event is already saved
+    const isEventSaved = savedEvents.some(event =>
+      event.id === processedEventId || event.eventId === processedEventId
+    );
+
+    let updatedSavedEvents = [];
+
+    if (isEventSaved) {
+      // Event is already saved, remove it from saved events
+      updatedSavedEvents = savedEvents.filter(event =>
+        event.id !== processedEventId && event.eventId !== processedEventId
+      );
+      setSavedEvents(updatedSavedEvents);
+      setSuccess('Event removed from saved events.');
+    } else {
+      // Event is not saved, add it to saved events with all needed data
+      const newSavedEvent = {
+        id: processedEventId,
+        eventId: processedEventId,
+        name: eventData.name,
+        venue: eventData.venue,
+        startDate: eventData.startDate,
+        image: eventData.image,
+        images: eventData.images
+      };
+      updatedSavedEvents = [...savedEvents, newSavedEvent];
+      setSavedEvents(updatedSavedEvents);
+      setSuccess('Event saved successfully.');
+    }
+
+    // Update the global state in BottomTray
+    updateSavedEvents(updatedSavedEvents);
+
+    // Optionally, you can also update the itinerary state here if needed
+    setItinerary(prev => {
+      const filtered = prev.filter(i => i.eventId !== processedEventId);
+      return [...filtered, { eventId: processedEventId, status: isEventSaved ? 'removed' : 'saved' }];
+    });
+
+    // Show success message
+    setTimeout(() => setSuccess(null), 3000);
+  };
+
   return (
     <div className="home-container">
       {/* Step 1: City Selection Only */}
@@ -597,6 +657,7 @@ const Home = () => {
               />
             </div>
           </div>
+
           <div className="home-results-grid">
             <div className="home-grid">
               <div className="lg:col-span-1">
@@ -618,6 +679,11 @@ const Home = () => {
                   currentImageIndex={currentImageIndex}
                   highlightedEvent={highlightedEvent}
                   formatDate={formatDate}
+                  totalPages={totalPages}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  savedEvents={savedEvents}
+                  onAddEvent={handleAddEvent}
                 />
                 {loading && <LoadingState />}
                 {error && <ErrorState message={error} />}
@@ -658,6 +724,13 @@ const Home = () => {
               </div>
             </div>
           </div>
+
+          {/* Events Tray for saved events, always visible */}
+          <EventsTray
+            savedEvents={savedEvents}
+            loading={loading}
+            formatDate={formatDate}
+          />
         </div>
       )}
 

@@ -8,3 +8,10 @@ spring:
 aws:
   dynamodb:
     region: us-east-2 # Change to your AWS region
+
+# AI API Configuration
+ai:
+  api:
+    type: gemini  # Set to 'gemini' for Google Gemini or 'openai' for OpenAI
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent
+    model: gemini-1.5-flash-latest

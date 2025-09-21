@@ -5,12 +5,10 @@ import { API_BASE_URL } from '../common/Constants';
 import '../styles/MyTravel.css';
 
 // Import component modules
-import TravelMap from './MyTravel/TravelMap';
-import AiAssistant from './MyTravel/AiAssistant';
 import VoiceNotesTab from './MyTravel/VoiceNotesTab';
-import SavedEvents from './MyTravel/SavedEvents';
 import CitySelector from './MyTravel/CitySelector';
 import TabNavigation from './MyTravel/TabNavigation';
+import ItineraryView from './MyTravel/ItineraryView'; // Import the new ItineraryView component
 
 const MyTravel = () => {
   // Core state
@@ -18,18 +16,7 @@ const MyTravel = () => {
   const [savedEvents, setSavedEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedCity, setSelectedCity] = useState('New York'); // Default city
-  const [mapCenter, setMapCenter] = useState([40.74, -73.98]); // NYC default
-  const [activeSecondaryTab, setActiveSecondaryTab] = useState('voice');
-
-  // AI Assistant state
-  const [aiInput, setAiInput] = useState('');
-  const promptSuggestions = [
-    "Find restaurants near my events",
-    "Plan a day itinerary",
-    "Suggest transportation options",
-    "Weather forecast for my trip",
-    "Budget planning tips"
-  ];
+  const [activeSecondaryTab, setActiveSecondaryTab] = useState('itinerary'); // Set itinerary as default tab
 
   // Voice Notes state and refs
   const [isRecording, setIsRecording] = useState(false);
@@ -40,25 +27,6 @@ const MyTravel = () => {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const audioPlayerRef = useRef(null);
-
-  // Function to get coordinates for a city using geocoding
-  const getCityCoordinates = async (cityName) => {
-    try {
-      const response = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1`
-      );
-
-      if (response.data && response.data.length > 0) {
-        const { lat, lon } = response.data[0];
-        return [parseFloat(lat), parseFloat(lon)];
-      }
-
-      return [40.74, -73.98]; // Default to NYC if not found
-    } catch (error) {
-      console.error('Error geocoding city:', error);
-      return [40.74, -73.98];
-    }
-  };
 
   // Fetch saved/interested events
   useEffect(() => {
@@ -140,27 +108,6 @@ const MyTravel = () => {
       fetchVoiceNotes();
     }
   }, [token, activeSecondaryTab]);
-
-  // Update map center when selected city changes
-  useEffect(() => {
-    const updateMapCenter = async () => {
-      const coordinates = await getCityCoordinates(selectedCity);
-      setMapCenter(coordinates);
-    };
-
-    updateMapCenter();
-  }, [selectedCity]);
-
-  // AI Assistant handlers
-  const handleAiSubmit = async (e) => {
-    e.preventDefault();
-    console.log('AI prompt submitted:', aiInput);
-    setAiInput('');
-  };
-
-  const handlePromptClick = (prompt) => {
-    setAiInput(prompt);
-  };
 
   // Voice recording handlers
   const startRecording = async () => {
@@ -279,61 +226,48 @@ const MyTravel = () => {
       {/* City selector component */}
       <CitySelector selectedCity={selectedCity} setSelectedCity={setSelectedCity} />
 
-      {/* Main content - two column layout */}
-      <div className="my-travel-grid">
-        {/* Left column - Map and Events */}
-        <div className="my-travel-column">
-          {/* Map view */}
-          <TravelMap mapCenter={mapCenter} savedEvents={savedEvents} />
-
-          {/* Saved Events component */}
-          <SavedEvents loading={loading} savedEvents={savedEvents} />
-        </div>
-
-        {/* Right column - AI Assistant and Additional Features */}
-        <div className="my-travel-column">
-          {/* AI Assistant - Always visible */}
-          <AiAssistant
-            aiInput={aiInput}
-            setAiInput={setAiInput}
-            handleAiSubmit={handleAiSubmit}
-            handlePromptClick={handlePromptClick}
-            promptSuggestions={promptSuggestions}
+      {/* Main content - simplified layout */}
+      <div className="my-travel-content">
+        {/* Tab navigation and content */}
+        <div className="my-travel-tab-container">
+          <TabNavigation
+            activeSecondaryTab={activeSecondaryTab}
+            setActiveSecondaryTab={setActiveSecondaryTab}
           />
 
-          {/* Secondary tabs for additional features */}
-          <div className="my-travel-tab-container">
-            {/* Tab navigation component */}
-            <TabNavigation
-              activeSecondaryTab={activeSecondaryTab}
-              setActiveSecondaryTab={setActiveSecondaryTab}
-            />
+          <div className="my-travel-tab-content">
+            {activeSecondaryTab === 'voice' && (
+              <VoiceNotesTab
+                isRecording={isRecording}
+                recordingName={recordingName}
+                setRecordingName={setRecordingName}
+                startRecording={startRecording}
+                stopRecording={stopRecording}
+                voiceNotesLoading={voiceNotesLoading}
+                audioNotes={audioNotes}
+                audioPlayerRef={audioPlayerRef}
+                currentAudio={currentAudio}
+                setCurrentAudio={setCurrentAudio}
+                togglePlayback={togglePlayback}
+                deleteNote={deleteNote}
+              />
+            )}
 
-            {/* Tab content */}
-            <div className="my-travel-tab-content">
-              {activeSecondaryTab === 'voice' && (
-                <VoiceNotesTab
-                  isRecording={isRecording}
-                  recordingName={recordingName}
-                  setRecordingName={setRecordingName}
-                  startRecording={startRecording}
-                  stopRecording={stopRecording}
-                  voiceNotesLoading={voiceNotesLoading}
-                  audioNotes={audioNotes}
-                  audioPlayerRef={audioPlayerRef}
-                  currentAudio={currentAudio}
-                  setCurrentAudio={setCurrentAudio}
-                  togglePlayback={togglePlayback}
-                  deleteNote={deleteNote}
-                />
-              )}
+            {activeSecondaryTab === 'future' && (
+              <div className="my-travel-empty-state">
+                <p>Future feature coming soon</p>
+              </div>
+            )}
 
-              {activeSecondaryTab === 'future' && (
-                <div className="my-travel-empty-state">
-                  <p>Future feature coming soon</p>
-                </div>
-              )}
-            </div>
+            {activeSecondaryTab === 'itinerary' && (
+              <ItineraryView
+                token={token}
+                user={user}
+                savedEvents={savedEvents}
+                loading={loading}
+                setLoading={setLoading}
+              />
+            )}
           </div>
         </div>
       </div>
