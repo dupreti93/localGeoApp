@@ -74,6 +74,7 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                             .requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/api/events/**").permitAll()  // Public access to events
+                            .requestMatchers("/api/places/**").permitAll()  // Public access to places (restaurants/attractions)
                             .requestMatchers("/api/itinerary/**").authenticated()  // Requires login
                             .anyRequest().authenticated();
                 })

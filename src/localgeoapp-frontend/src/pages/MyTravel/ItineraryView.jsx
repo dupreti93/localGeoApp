@@ -11,23 +11,30 @@ const ItineraryView = ({ token, user, loading, setLoading, activeSecondaryTab })
   const [fetchLoading, setFetchLoading] = useState(false);
 
   // Fetch user's existing itineraries
-  const fetchUserItineraries = async () => {
+  const fetchUserItineraries = async (forceRefresh = false) => {
     if (!token) return;
 
     setFetchLoading(true);
     try {
-      console.log('🔄 Fetching user itineraries...');
+      console.log('🔄 Fetching user itineraries...', forceRefresh ? '(forced refresh)' : '');
+
+      // Add cache busting parameter to force fresh data
       const itineraries = await ItineraryService.getUserItineraries(token);
       console.log('✅ Fetched itineraries:', itineraries);
 
       setUserItineraries(itineraries);
 
+      // Sort itineraries by creation date (most recent first)
+      const sortedItineraries = itineraries.sort((a, b) =>
+        new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
       // If user has itineraries, show the most recent one
-      if (itineraries.length > 0) {
-        const mostRecent = itineraries[0]; // Assuming they're sorted by creation date
+      if (sortedItineraries.length > 0) {
+        const mostRecent = sortedItineraries[0];
         setGeneratedItinerary(mostRecent);
         setSelectedItineraryId(mostRecent.itineraryId);
-        console.log('📋 Displaying most recent itinerary:', mostRecent.title);
+        console.log('📋 Displaying most recent itinerary:', mostRecent.title, 'Created:', mostRecent.createdAt);
       } else {
         setGeneratedItinerary(null);
         setSelectedItineraryId(null);
@@ -41,6 +48,12 @@ const ItineraryView = ({ token, user, loading, setLoading, activeSecondaryTab })
     }
   };
 
+  // Function to force refresh itineraries (called after generating new itinerary)
+  const forceRefreshItineraries = () => {
+    console.log('🚀 Force refreshing itineraries...');
+    fetchUserItineraries(true);
+  };
+
   // Fetch itineraries on component mount and when token changes
   useEffect(() => {
     fetchUserItineraries();
@@ -50,9 +63,9 @@ const ItineraryView = ({ token, user, loading, setLoading, activeSecondaryTab })
   useEffect(() => {
     if (activeSecondaryTab === 'itinerary' && token) {
       console.log('🔄 Itinerary tab became active, refreshing itineraries...');
-      // Add a small delay to allow for backend processing after navigation
+      // Force refresh to get latest data
       setTimeout(() => {
-        fetchUserItineraries();
+        fetchUserItineraries(true);
       }, 500);
     }
   }, [activeSecondaryTab, token]);
@@ -62,7 +75,7 @@ const ItineraryView = ({ token, user, loading, setLoading, activeSecondaryTab })
     const handleVisibilityChange = () => {
       if (!document.hidden && token && activeSecondaryTab === 'itinerary') {
         console.log('👁️ Tab became visible, refreshing itineraries...');
-        fetchUserItineraries();
+        fetchUserItineraries(true);
       }
     };
 
@@ -70,7 +83,7 @@ const ItineraryView = ({ token, user, loading, setLoading, activeSecondaryTab })
     const handleFocus = () => {
       if (token && activeSecondaryTab === 'itinerary') {
         console.log('🎯 Window gained focus, refreshing itineraries...');
-        fetchUserItineraries();
+        fetchUserItineraries(true);
       }
     };
 

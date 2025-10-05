@@ -15,3 +15,13 @@ ai:
     type: gemini  # Set to 'gemini' for Google Gemini or 'openai' for OpenAI
     url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
     model: gemini-2.5-flash
+
+# API Keys Configuration (store in AWS AppConfig for production)
+api:
+  keys:
+    # Yelp Fusion API key
+    yelp: ${YELP_API_KEY:your-yelp-api-key-here}
+    # Google Places API key
+    google-places: ${GOOGLE_PLACES_API_KEY:your-google-places-api-key-here}
+    # Ticketmaster API key (existing)
+    ticketmaster: ${TICKETMASTER_API_KEY:your-ticketmaster-api-key-here}

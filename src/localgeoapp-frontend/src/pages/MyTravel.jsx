@@ -9,7 +9,7 @@ import '../styles/MyTravel.css';
 import VoiceNotesTab from './MyTravel/VoiceNotesTab';
 import CitySelector from './MyTravel/CitySelector';
 import TabNavigation from './MyTravel/TabNavigation';
-import ItineraryView from './MyTravel/ItineraryView'; // Import the new ItineraryView component
+import ItineraryView from './MyTravel/ItineraryView';
 
 const MyTravel = () => {
   // Core state
@@ -203,12 +203,6 @@ const MyTravel = () => {
               />
             )}
 
-            {activeSecondaryTab === 'future' && (
-              <div className="my-travel-empty-state">
-                <p>Future feature coming soon</p>
-              </div>
-            )}
-
             {activeSecondaryTab === 'itinerary' && (
               <ItineraryView
                 token={token}
@@ -217,6 +211,12 @@ const MyTravel = () => {
                 setLoading={setLoading}
                 activeSecondaryTab={activeSecondaryTab}
               />
+            )}
+
+            {activeSecondaryTab === 'future' && (
+              <div className="my-travel-empty-state">
+                <p>Future feature coming soon</p>
+              </div>
             )}
           </div>
         </div>
