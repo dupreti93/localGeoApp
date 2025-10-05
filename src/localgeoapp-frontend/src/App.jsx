@@ -1,6 +1,7 @@
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { TabProvider, useTab } from './context/TabContext.jsx';
+import { EventsProvider } from './context/EventsContext.jsx';
 import Home from './pages/Home.jsx';
 import MyTravel from './pages/MyTravel.jsx';
 import Nav from './pages/shared/Nav.jsx';
@@ -32,9 +33,11 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <TabProvider>
-          <AppContent />
-        </TabProvider>
+        <EventsProvider>
+          <TabProvider>
+            <AppContent />
+          </TabProvider>
+        </EventsProvider>
       </BrowserRouter>
     </AuthProvider>
   );

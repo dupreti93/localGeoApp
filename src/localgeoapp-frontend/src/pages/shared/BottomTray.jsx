@@ -3,6 +3,7 @@ import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useContext } from 'react';
 import { useTab } from '../../context/TabContext';
 import { AuthContext } from '../../context/AuthContext';
+import ItineraryService from '../../services/ItineraryService';
 import '../../styles/BottomTray.css';
 
 // Initialize saved events from localStorage if available
@@ -149,30 +150,47 @@ const BottomTray = () => {
 
   // Handle Build Itinerary click
   const handleBuildItineraryClick = async () => {
-    console.log('Build itinerary clicked');
+    console.log('🚀 Build itinerary clicked with saved events:', savedEvents);
 
-    // Show loading state
-    alert('Generating your itinerary with AI... This would typically take a few moments.');
+    if (!user) {
+      alert('Please login to build an itinerary');
+      return;
+    }
+
+    if (!savedEvents || savedEvents.length === 0) {
+      alert('Please save some events first to build an itinerary');
+      return;
+    }
 
     try {
-      // In a real implementation, you would:
-      // 1. Make an API call to your AI service
-      // 2. Pass the saved events as input to the AI
-      // 3. Get back a structured itinerary
+      // Show loading state
+      alert('Generating your itinerary with AI... This may take a few moments.');
 
-      // For now, we'll simulate the AI response with a timeout
-      setTimeout(() => {
-        // This is where you'd make the actual API call to your backend
-        // For now, we'll just navigate to the My Travel tab
-        // When you integrate with backend, you'll pass the AI-generated itinerary
-        handleMyTravelClick();
+      // Format events for API call
+      const formattedEvents = ItineraryService.formatEventsForAPI(savedEvents);
+      console.log('📋 Formatted events for API:', formattedEvents);
 
-        // Indicate success
-        alert('Itinerary successfully generated! You can view it in My Travel.');
-      }, 1500);
+      // Get token from AuthContext
+      const token = user?.token || localStorage.getItem('token');
+      if (!token) {
+        alert('Please login to build an itinerary');
+        return;
+      }
+
+      // Call the actual API to generate itinerary
+      console.log('🌐 Calling ItineraryService.generateItinerary...');
+      const newItinerary = await ItineraryService.generateItinerary(formattedEvents, token);
+      console.log('✅ Itinerary generated successfully:', newItinerary);
+
+      // Navigate to My Travel tab to show the generated itinerary
+      handleMyTravelClick();
+
+      // Show success message
+      alert('Itinerary successfully generated! You can view it in My Travel.');
+
     } catch (error) {
-      console.error('Error generating itinerary:', error);
-      alert('Failed to generate itinerary. Please try again.');
+      console.error('💥 Error generating itinerary:', error);
+      alert('Failed to generate itinerary: ' + error.message);
     }
   };
 

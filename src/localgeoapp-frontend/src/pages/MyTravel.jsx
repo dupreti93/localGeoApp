@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { useEvents } from '../context/EventsContext';
 import axios from 'axios';
 import { API_BASE_URL } from '../common/Constants';
 import '../styles/MyTravel.css';
@@ -13,7 +14,7 @@ import ItineraryView from './MyTravel/ItineraryView'; // Import the new Itinerar
 const MyTravel = () => {
   // Core state
   const { token, user } = useContext(AuthContext);
-  const [savedEvents, setSavedEvents] = useState([]);
+  const { selectedEvents } = useEvents(); // Get selected events from shared context
   const [loading, setLoading] = useState(false);
   const [selectedCity, setSelectedCity] = useState('New York'); // Default city
   const [activeSecondaryTab, setActiveSecondaryTab] = useState('itinerary'); // Set itinerary as default tab
@@ -28,61 +29,10 @@ const MyTravel = () => {
   const audioChunksRef = useRef([]);
   const audioPlayerRef = useRef(null);
 
-  // Fetch saved/interested events
+  // Log selected events for debugging
   useEffect(() => {
-    const fetchSavedEvents = async () => {
-      if (!token) return;
-
-      setLoading(true);
-      try {
-        // Use the same base endpoint as used in Home.jsx for itinerary
-        const response = await axios.get(
-          `${API_BASE_URL}/itinerary`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        // Filter events marked as "saved" or "interested"
-        const savedOrInterestedEvents = response.data.filter(
-          item => item.status === 'saved' || item.status === 'interested'
-        );
-
-        // If the response contains event details, use them directly
-        if (savedOrInterestedEvents.length > 0 && savedOrInterestedEvents[0].event) {
-          setSavedEvents(savedOrInterestedEvents.map(item => item.event));
-        }
-        // If the response only contains eventIds, fetch the details for each event
-        else if (savedOrInterestedEvents.length > 0) {
-          // Fetch details for each event ID
-          const eventDetails = await Promise.all(
-            savedOrInterestedEvents.map(async (item) => {
-              try {
-                const eventResponse = await axios.get(
-                  `${API_BASE_URL}/events/${item.eventId}`,
-                  { headers: { Authorization: `Bearer ${token}` } }
-                );
-                return eventResponse.data;
-              } catch (err) {
-                console.error(`Error fetching event ${item.eventId}:`, err);
-                return null;
-              }
-            })
-          );
-
-          // Filter out any null responses
-          setSavedEvents(eventDetails.filter(event => event !== null));
-        } else {
-          setSavedEvents([]);
-        }
-      } catch (error) {
-        console.error('Error fetching saved events:', error);
-        setSavedEvents([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSavedEvents();
-  }, [token]);
+    console.log('📋 MyTravel: Selected events from context:', selectedEvents);
+  }, [selectedEvents]);
 
   // Fetch voice notes when tab is active
   useEffect(() => {
@@ -263,9 +213,9 @@ const MyTravel = () => {
               <ItineraryView
                 token={token}
                 user={user}
-                savedEvents={savedEvents}
                 loading={loading}
                 setLoading={setLoading}
+                activeSecondaryTab={activeSecondaryTab}
               />
             )}
           </div>

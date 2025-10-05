@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import Filter from './Home/Filter';
 import { AuthContext } from '../context/AuthContext';
+import { useEvents } from '../context/EventsContext';
+import ItineraryService from '../services/ItineraryService';
 import LoginModal from './shared/LoginModal';
 import { API_BASE_URL } from '../common/Constants';
 import EventList from './Home/EventList';

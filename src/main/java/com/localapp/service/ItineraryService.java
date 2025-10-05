@@ -155,7 +155,7 @@ public class ItineraryService {
             generationConfig.put("temperature", 0.7);
             generationConfig.put("topK", 40);
             generationConfig.put("topP", 0.95);
-            generationConfig.put("maxOutputTokens", 4000);
+            generationConfig.put("maxOutputTokens", 8000); // Increased from 4000 to 8000
             requestBody.set("generationConfig", generationConfig);
 
             String urlWithKey = apiUrl + "?key=" + apiKey;
