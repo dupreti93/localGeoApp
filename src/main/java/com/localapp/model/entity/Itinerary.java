@@ -1,5 +1,6 @@
-package com.localapp.model;
+package com.localapp.model.entity;
 
+import com.localapp.model.embedded.Activity;
 import lombok.Data;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
@@ -19,7 +20,7 @@ public class Itinerary {
     private String startDate;
     private String endDate;
     private String description;
-    private List<DayPlan> dayPlans;
+    private List<Activity> activities;  // Direct list of activities instead of dayPlans
     private String notes;
     private LocalDateTime createdAt;
 

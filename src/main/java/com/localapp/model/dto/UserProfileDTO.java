@@ -1,4 +1,4 @@
-package com.localapp.model;
+package com.localapp.model.dto;
 
 import jakarta.validation.constraints.Size;
 

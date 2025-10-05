@@ -1,6 +1,6 @@
 package com.localapp.repository;
 
-import com.localapp.model.Itinerary;
+import com.localapp.model.entity.Itinerary;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
@@ -19,7 +19,7 @@ public class ItineraryRepository {
 
     @Autowired
     public ItineraryRepository(DynamoDbEnhancedClient enhancedClient) {
-        this.itineraryTable = enhancedClient.table("AIItineraries", TableSchema.fromBean(Itinerary.class));
+        this.itineraryTable = enhancedClient.table("Itinerary", TableSchema.fromBean(Itinerary.class));
     }
 
     public void save(Itinerary itinerary) {
@@ -42,6 +42,23 @@ public class ItineraryRepository {
         return itineraryTable.query(queryConditional)
                 .items()
                 .stream()
+                .collect(Collectors.toList());
+    }
+
+    public List<Itinerary> findByUserCityDate(String userId, String city, String date) {
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(
+                Key.builder().partitionValue(userId).build()
+        );
+
+        return itineraryTable.query(queryConditional)
+                .items()
+                .stream()
+                .filter(itinerary ->
+                    (city == null || city.equals(itinerary.getCity())) &&
+                    (date == null || date.equals(itinerary.getStartDate()) ||
+                     (itinerary.getStartDate() != null && itinerary.getEndDate() != null &&
+                      date.compareTo(itinerary.getStartDate()) >= 0 &&
+                      date.compareTo(itinerary.getEndDate()) <= 0)))
                 .collect(Collectors.toList());
     }
 

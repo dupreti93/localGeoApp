@@ -1,6 +1,6 @@
-package com.localapp.model;
+package com.localapp.model.dto;
 
-public class EventInputDTO {
+public class SelectedEvent {
     private String id;
     private String name;
     private String venue;

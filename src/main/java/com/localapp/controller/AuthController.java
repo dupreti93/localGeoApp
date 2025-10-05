@@ -1,6 +1,6 @@
 package com.localapp.controller;
 
-import com.localapp.model.User;
+import com.localapp.model.entity.User;
 import com.localapp.repository.UserRepository;
 import com.localapp.util.JwtUtil;
 import jakarta.validation.Valid;
@@ -31,7 +31,7 @@ public class AuthController {
     private JwtUtil jwtUtil;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@Valid @RequestBody User user) {
+    public ResponseEntity<String> register(@RequestBody @Valid User user) {
         logger.info("Registering user: username={}, displayName={}, bio={}",
                 user.getUsername(), user.getDisplayName(), user.getBio());
         user.setUserId(UUID.randomUUID().toString()); // Generate unique userId

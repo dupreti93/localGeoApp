@@ -1,6 +1,5 @@
 package com.localapp.controller;
 
-import com.localapp.model.Event;
 import com.localapp.service.EventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -52,8 +51,8 @@ public class EventController {
      * @return The event details or 404 if not found
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Event> getEventById(@PathVariable String id) {
-        Event event = eventService.getEventById(id);
+    public ResponseEntity<Map<String, Object>> getEventById(@PathVariable String id) {
+        Map<String, Object> event = eventService.getEventById(id);
         if (event != null) {
             return ResponseEntity.ok(event);
         } else {

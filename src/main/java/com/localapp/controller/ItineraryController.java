@@ -1,7 +1,7 @@
 package com.localapp.controller;
 
-import com.localapp.model.EventInputDTO;
-import com.localapp.model.Itinerary;
+import com.localapp.model.dto.SelectedEvent;
+import com.localapp.model.entity.Itinerary;
 import com.localapp.service.ItineraryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -46,7 +46,7 @@ public class ItineraryController {
      * Generate an AI itinerary based on saved events
      */
     @PostMapping("/generate")
-    public ResponseEntity<Itinerary> generateAIItinerary(@RequestBody List<EventInputDTO> events) {
+    public ResponseEntity<Itinerary> generateAIItinerary(@RequestBody List<SelectedEvent> events) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
         if (events == null || events.isEmpty()) {

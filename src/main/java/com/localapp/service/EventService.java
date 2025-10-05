@@ -1,7 +1,6 @@
 package com.localapp.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.localapp.model.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -184,13 +183,13 @@ public class EventService {
     }
 
     /**
-     * Fetches a specific event by its ID from Ticketmaster API and returns it as an Event object.
+     * Fetches a specific event by its ID from Ticketmaster API and returns it as a Map.
      *
      * @param eventId The Ticketmaster event ID
-     * @return Event object with details, or null if not found
+     * @return Map with event details, or null if not found
      * @throws RuntimeException if there's an error fetching the event
      */
-    public Event getEventById(String eventId) {
+    public Map<String, Object> getEventById(String eventId) {
         try {
             String apiKey = appConfigService.getTicketmasterApiKey();
             logger.info("Fetching event details for ID: {}", eventId);
@@ -204,11 +203,11 @@ public class EventService {
                 ObjectMapper mapper = new ObjectMapper();
                 Map<String, Object> eventData = mapper.readValue(responseBody, Map.class);
 
-                Event event = new Event();
-                event.setId((String) eventData.get("id"));
-                event.setName((String) eventData.get("name"));
-                event.setUrl((String) eventData.get("url"));
-                event.setType((String) eventData.get("type"));
+                Map<String, Object> event = new HashMap<>();
+                event.put("id", eventData.get("id"));
+                event.put("name", eventData.get("name"));
+                event.put("url", eventData.get("url"));
+                event.put("type", eventData.get("type"));
 
                 // Extract venue information
                 if (eventData.containsKey("_embedded")) {
@@ -217,41 +216,17 @@ public class EventService {
                         List<Map> venues = (List<Map>) embedded.get("venues");
                         if (!venues.isEmpty()) {
                             Map venue = venues.get(0);
-                            event.setVenue((String) venue.get("name"));
+                            event.put("venue", venue.get("name"));
 
                             if (venue.containsKey("city")) {
                                 Map cityData = (Map) venue.get("city");
-                                event.setCity((String) cityData.get("name"));
+                                event.put("city", cityData.get("name"));
                             }
 
                             if (venue.containsKey("location")) {
                                 Map location = (Map) venue.get("location");
-                                // Handle latitude and longitude safely - could be String or Double
-                                if (location.containsKey("latitude")) {
-                                    Object lat = location.get("latitude");
-                                    if (lat instanceof Double) {
-                                        event.setLatitude((Double) lat);
-                                    } else if (lat instanceof String) {
-                                        try {
-                                            event.setLatitude(Double.parseDouble((String) lat));
-                                        } catch (NumberFormatException e) {
-                                            logger.warn("Could not parse latitude as double: {}", lat);
-                                        }
-                                    }
-                                }
-
-                                if (location.containsKey("longitude")) {
-                                    Object lng = location.get("longitude");
-                                    if (lng instanceof Double) {
-                                        event.setLongitude((Double) lng);
-                                    } else if (lng instanceof String) {
-                                        try {
-                                            event.setLongitude(Double.parseDouble((String) lng));
-                                        } catch (NumberFormatException e) {
-                                            logger.warn("Could not parse longitude as double: {}", lng);
-                                        }
-                                    }
-                                }
+                                event.put("latitude", location.get("latitude"));
+                                event.put("longitude", location.get("longitude"));
                             }
                         }
                     }
@@ -261,48 +236,17 @@ public class EventService {
                 if (eventData.containsKey("dates") && ((Map) eventData.get("dates")).containsKey("start")) {
                     Map dates = (Map) eventData.get("dates");
                     Map start = (Map) dates.get("start");
-                    event.setStartDate((String) start.get("dateTime"));
+                    event.put("startDate", start.get("dateTime"));
                 }
 
-                // Extract price range information with safe type handling
+                // Extract price range information
                 if (eventData.containsKey("priceRanges")) {
                     List<Map> priceRanges = (List<Map>) eventData.get("priceRanges");
                     if (!priceRanges.isEmpty()) {
                         Map priceRange = priceRanges.get(0);
-
-                        // Handle minimum price - could be String or Double
-                        if (priceRange.containsKey("min")) {
-                            Object min = priceRange.get("min");
-                            if (min instanceof Double) {
-                                event.setMinPrice((Double) min);
-                            } else if (min instanceof String) {
-                                try {
-                                    event.setMinPrice(Double.parseDouble((String) min));
-                                } catch (NumberFormatException e) {
-                                    logger.warn("Could not parse min price as double: {}", min);
-                                }
-                            } else if (min instanceof Integer) {
-                                event.setMinPrice(((Integer) min).doubleValue());
-                            }
-                        }
-
-                        // Handle maximum price - could be String or Double
-                        if (priceRange.containsKey("max")) {
-                            Object max = priceRange.get("max");
-                            if (max instanceof Double) {
-                                event.setMaxPrice((Double) max);
-                            } else if (max instanceof String) {
-                                try {
-                                    event.setMaxPrice(Double.parseDouble((String) max));
-                                } catch (NumberFormatException e) {
-                                    logger.warn("Could not parse max price as double: {}", max);
-                                }
-                            } else if (max instanceof Integer) {
-                                event.setMaxPrice(((Integer) max).doubleValue());
-                            }
-                        }
-
-                        event.setCurrency((String) priceRange.get("currency"));
+                        event.put("minPrice", priceRange.get("min"));
+                        event.put("maxPrice", priceRange.get("max"));
+                        event.put("currency", priceRange.get("currency"));
                     }
                 }
 
@@ -315,26 +259,26 @@ public class EventService {
                             .findFirst()
                             .orElse(images.get(0));
                         String imageUrl = (String) bestImage.get("url");
-                        event.setImage(imageUrl);
+                        event.put("image", imageUrl);
 
                         List<String> imageUrls = images.stream()
                             .filter(img -> img.containsKey("url"))
                             .map(img -> (String) img.get("url"))
                             .collect(Collectors.toList());
-                        event.setImages(imageUrls);
+                        event.put("images", imageUrls);
                     }
                 }
 
                 // Extract description or info
                 if (eventData.containsKey("info")) {
-                    event.setDescription((String) eventData.get("info"));
+                    event.put("description", eventData.get("info"));
                 } else if (eventData.containsKey("description")) {
-                    event.setDescription((String) eventData.get("description"));
+                    event.put("description", eventData.get("description"));
                 }
 
                 // Extract keywords
                 List<String> keywords = extractKeywords(eventData);
-                event.setKeywords(keywords);
+                event.put("keywords", keywords);
 
                 return event;
             } else {

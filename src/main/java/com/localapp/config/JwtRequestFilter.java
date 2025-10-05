@@ -48,9 +48,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             if (jwtUtil.validateToken(token)) {
                 String userId = jwtUtil.extractUserId(token);
                 logger.info("Token validated, userId: {}", userId);
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userId, null, null);
+
+                // Create authentication with proper authorities - THIS IS THE FIX!
+                java.util.List<org.springframework.security.core.GrantedAuthority> authorities =
+                        java.util.Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER"));
+
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userId, null, authorities);
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
+                logger.info("Authentication set with ROLE_USER for userId: {}", userId);
             } else {
                 logger.warn("Invalid JWT token");
             }

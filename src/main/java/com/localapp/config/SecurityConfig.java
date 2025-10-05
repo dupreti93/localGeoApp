@@ -1,6 +1,6 @@
 package com.localapp.config;
 
-import com.localapp.model.User;
+import com.localapp.model.entity.User;
 import com.localapp.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

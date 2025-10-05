@@ -1,7 +1,7 @@
 package com.localapp.controller;
 
-import com.localapp.model.User;
-import com.localapp.model.UserProfileDTO;
+import com.localapp.model.entity.User;
+import com.localapp.model.dto.UserProfileDTO;
 import com.localapp.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

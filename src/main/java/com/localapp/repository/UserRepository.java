@@ -1,6 +1,6 @@
 package com.localapp.repository;
 
-import com.localapp.model.User;
+import com.localapp.model.entity.User;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;

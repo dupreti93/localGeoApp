@@ -13,5 +13,5 @@ aws:
 ai:
   api:
     type: gemini  # Set to 'gemini' for Google Gemini or 'openai' for OpenAI
-    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent
-    model: gemini-1.5-flash-latest
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+    model: gemini-2.5-flash

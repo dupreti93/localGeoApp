@@ -1,4 +1,4 @@
-package com.localapp.model;
+package com.localapp.model.entity;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
