@@ -11,7 +11,6 @@ import EventList from './Home/EventList';
 import EventMap, { MapUpdater } from './Home/EventMap';
 import SearchHeader from './Home/SearchHeader';
 import EventsTray from './Home/EventsTray';
-import PlacesExplorer from '../components/PlacesExplorer';
 import { LoadingState, ErrorState, EmptyState, SuccessToast } from './shared/StateComponents';
 import { LocationIcon, CalendarIcon, SearchIcon, CheckIcon, ArrowRightIcon, ArrowLeftIcon, ImageIcon } from './shared/Icons';
 import { updateSavedEvents } from './shared/BottomTray';
@@ -45,10 +44,6 @@ const Home = () => {
   const [availableArtists, setAvailableArtists] = useState([]);
   // New state for saved events
   const [savedEvents, setSavedEvents] = useState([]);
-  // New state for saved places
-  const [savedPlaces, setSavedPlaces] = useState([]);
-  // New state for content type switching (events vs places)
-  const [activeContentType, setActiveContentType] = useState('events');
 
   const EVENTS_PER_PAGE = 15;
   const POPULAR_CITIES = [
@@ -524,60 +519,6 @@ const Home = () => {
     setTimeout(() => setSuccess(null), 3000);
   };
 
-  // New function to handle saving places
-  const handleAddPlace = (placeId) => {
-    if (!token || !user) {
-      setShowLoginModal(true);
-      return;
-    }
-
-    const processedPlaceId = placeId?.toString() || placeId;
-
-    // Check if the place is already saved
-    const isPlaceSaved = savedPlaces.some(place =>
-      place.id === processedPlaceId || place.placeId === processedPlaceId
-    );
-
-    let updatedSavedPlaces = [];
-
-    if (isPlaceSaved) {
-      // Place is already saved, remove it from saved places
-      updatedSavedPlaces = savedPlaces.filter(place =>
-        place.id !== processedPlaceId && place.placeId !== processedPlaceId
-      );
-      setSavedPlaces(updatedSavedPlaces);
-      setSuccess('Place removed from saved places.');
-    } else {
-      // Find the full place data from current places state
-      let placeData = null;
-      Object.values(places).forEach(categoryPlaces => {
-        if (Array.isArray(categoryPlaces)) {
-          const found = categoryPlaces.find(p => p.id === processedPlaceId);
-          if (found) placeData = found;
-        }
-      });
-
-      if (!placeData) return;
-
-      // Place is not saved, add it to saved places with all needed data
-      const newSavedPlace = {
-        id: processedPlaceId,
-        placeId: processedPlaceId,
-        name: placeData.name,
-        address: placeData.address || placeData.displayAddress || placeData.vicinity,
-        rating: placeData.rating,
-        source: placeData.source,
-        category: activeCategory
-      };
-      updatedSavedPlaces = [...savedPlaces, newSavedPlace];
-      setSavedPlaces(updatedSavedPlaces);
-      setSuccess('Place saved successfully.');
-    }
-
-    // Show success message
-    setTimeout(() => setSuccess(null), 3000);
-  };
-
   return (
     <div className="home-container">
       {/* Step 1: City Selection Only */}
@@ -720,82 +661,54 @@ const Home = () => {
           </div>
 
           <div className="home-results-grid">
-            {/* Content Type Tabs */}
-            <div className="content-type-tabs">
-              <button
-                className={`content-tab ${activeContentType === 'events' ? 'active' : ''}`}
-                onClick={() => setActiveContentType('events')}
-              >
-                🎵 Events & Concerts
-              </button>
-              <button
-                className={`content-tab ${activeContentType === 'places' ? 'active' : ''}`}
-                onClick={() => setActiveContentType('places')}
-              >
-                🍴 Restaurants & Places
-              </button>
-            </div>
-
             <div className="home-grid">
               <div className="lg:col-span-1">
-                {activeContentType === 'events' && (
-                  <>
-                    <div className="home-column-header">
-                      <h3 className="home-column-title">
-                        <CalendarIcon className="small-icon" />
-                        <span className="font-medium">
-                          <span className="home-column-title-city">{searchCity}</span> • {new Date(searchDate).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'})}
-                        </span>
-                      </h3>
-                    </div>
-                    <EventList
-                      events={displayedEvents}
-                      onEventAction={handleEventAction}
-                      getEventStatus={getEventStatus}
-                      onToggleDetails={toggleEventDetails}
-                      expandedEvent={expandedEvent}
-                      onImageNavigate={navigateImage}
-                      currentImageIndex={currentImageIndex}
-                      highlightedEvent={highlightedEvent}
-                      formatDate={formatDate}
-                      totalPages={totalPages}
-                      currentPage={currentPage}
-                      setCurrentPage={setCurrentPage}
-                      savedEvents={savedEvents}
-                      onAddEvent={handleAddEvent}
-                    />
-                    {loading && <LoadingState />}
-                    {error && <ErrorState message={error} />}
-                    {displayedEvents.length === 0 && !loading && <EmptyState message="No events found. Try different criteria." />}
+                <div className="home-column-header">
+                  <h3 className="home-column-title">
+                    <CalendarIcon className="small-icon" />
+                    <span className="font-medium">
+                      <span className="home-column-title-city">{searchCity}</span> • {new Date(searchDate).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'})}
+                    </span>
+                  </h3>
+                </div>
+                <EventList
+                  events={displayedEvents}
+                  onEventAction={handleEventAction}
+                  getEventStatus={getEventStatus}
+                  onToggleDetails={toggleEventDetails}
+                  expandedEvent={expandedEvent}
+                  onImageNavigate={navigateImage}
+                  currentImageIndex={currentImageIndex}
+                  highlightedEvent={highlightedEvent}
+                  formatDate={formatDate}
+                  totalPages={totalPages}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  savedEvents={savedEvents}
+                  onAddEvent={handleAddEvent}
+                />
+                {loading && <LoadingState />}
+                {error && <ErrorState message={error} />}
+                {displayedEvents.length === 0 && !loading && <EmptyState message="No events found. Try different criteria." />}
 
-                    {/* Simple Show More/Less Pagination */}
-                    {events.length > 10 && !loading && (
-                      <div className="pagination-container">
-                        <button
-                          onClick={() => {
-                            if (displayedEvents.length === events.length) {
-                              // Show only first 10 events
-                              setDisplayedEvents(events.slice(0, 10));
-                            } else {
-                              // Show all events
-                              setDisplayedEvents(events);
-                            }
-                          }}
-                          className="pagination-toggle-button"
-                        >
-                          {displayedEvents.length === events.length ? 'Show Less' : 'Show All Events'}
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {activeContentType === 'places' && (
-                  <PlacesExplorer
-                    location={searchCity}
-                    latitude={mapCenter[0]}
-                    longitude={mapCenter[1]}
-                  />
+                {/* Simple Show More/Less Pagination */}
+                {events.length > 10 && !loading && (
+                  <div className="pagination-container">
+                    <button
+                      onClick={() => {
+                        if (displayedEvents.length === events.length) {
+                          // Show only first 10 events
+                          setDisplayedEvents(events.slice(0, 10));
+                        } else {
+                          // Show all events
+                          setDisplayedEvents(events);
+                        }
+                      }}
+                      className="pagination-toggle-button"
+                    >
+                      {displayedEvents.length === events.length ? 'Show Less' : 'Show All Events'}
+                    </button>
+                  </div>
                 )}
               </div>
               <div className="lg:col-span-2">

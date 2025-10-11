@@ -37,11 +37,6 @@ public class AppConfigService {
     }
 
 
-    @Cacheable(value = "apiKeys", key = "'googlePlacesApiKey'")
-    public String getGooglePlacesApiKey() {
-        return getConfigValue("GOOGLE_API_KEY");
-    }
-
     private String getConfigValue(String key) {
         try (AppConfigClient client = AppConfigClient.create()) {
             GetConfigurationRequest request = GetConfigurationRequest.builder()

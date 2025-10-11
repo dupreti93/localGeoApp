@@ -24,6 +24,9 @@ public class EventService {
     private final RestTemplate restTemplate;
     private static final String TICKETMASTER_API = "https://app.ticketmaster.com/discovery/v2/events.json";
     private static final String TICKETMASTER_EVENT_API = "https://app.ticketmaster.com/discovery/v2/events/";
+    // Add Commerce API endpoints for availability data
+    private static final String TICKETMASTER_COMMERCE_API = "https://app.ticketmaster.com/commerce/v2/events/";
+    private static final String TICKETMASTER_INVENTORY_API = "https://app.ticketmaster.com/inventory-status/v1/availability/";
 
     /**
      * Constructs a new EventService with the required AppConfigService for API key management.
@@ -340,3 +343,4 @@ public class EventService {
         return keywords;
     }
 }
+
