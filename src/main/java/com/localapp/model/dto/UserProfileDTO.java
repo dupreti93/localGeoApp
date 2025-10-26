@@ -3,9 +3,10 @@ package com.localapp.model.dto;
 import jakarta.validation.constraints.Size;
 
 public class UserProfileDTO {
-    @Size(max = 50, message = "Display name must be 50 characters or less")
+    @Size(max = 100)
     private String displayName;
-    @Size(max = 200, message = "Bio must be 200 characters or less")
+
+    @Size(max = 500)
     private String bio;
 
     public String getDisplayName() {
@@ -24,3 +25,4 @@ public class UserProfileDTO {
         this.bio = bio;
     }
 }
+

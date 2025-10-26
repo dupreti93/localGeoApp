@@ -2,12 +2,6 @@ package com.localapp.config;
 
 import com.localapp.model.entity.User;
 import com.localapp.repository.UserRepository;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,78 +17,41 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
-
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
 
     @Bean
-    public OncePerRequestFilter loggingFilter() {
-        return new OncePerRequestFilter() {
-            private final Logger filterLogger = LoggerFactory.getLogger("RequestLoggingFilter");
-
-            @Override
-            protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-                    throws ServletException, IOException {
-                filterLogger.info("Incoming request: {} {} from origin: {}",
-                        request.getMethod(), request.getRequestURI(), request.getHeader("Origin"));
-                filterLogger.debug("Request headers: Authorization={}, Content-Type={}",
-                        request.getHeader("Authorization"), request.getHeader("Content-Type"));
-                chain.doFilter(request, response);
-                filterLogger.info("Response status: {} for {} {}",
-                        response.getStatus(), request.getMethod(), request.getRequestURI());
-            }
-        };
-    }
-
-    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        logger.info("Configuring Spring Security with CORS and authentication rules");
         http
-                .csrf(csrf -> {
-                    logger.info("Disabling CSRF protection");
-                    csrf.disable();
-                })
-                .cors(cors -> {
-                    logger.info("Applying CORS configuration for origins: http://localhost:5173");
-                    cors.configurationSource(corsConfigurationSource());
-                })
-                .authorizeHttpRequests(auth -> {
-                    logger.info("Setting up authorization rules");
-                    auth
-                            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                            .requestMatchers("/api/auth/**").permitAll()
-                            .requestMatchers("/api/events/**").permitAll()  // Public access to events
-                            .requestMatchers("/api/itinerary/**").authenticated()  // Requires login
-                            .anyRequest().authenticated();
-                })
-                .addFilterBefore(loggingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/events/**").permitAll()
+                        .requestMatchers("/api/users/**").authenticated()
+                        .anyRequest().authenticated()
+                )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
-        logger.info("Security filter chain configured successfully");
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        logger.info("Configuring CORS with allowed origins, methods, and headers");
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // Remove unused origins
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control", "X-Requested-With"));
-        configuration.setExposedHeaders(Arrays.asList("Access-Control-Allow-Origin", "Access-Control-Allow-Methods", "Authorization"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
 

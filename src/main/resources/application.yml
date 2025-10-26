@@ -23,5 +23,5 @@ api:
     yelp: ${YELP_API_KEY:your-yelp-api-key-here}
     # Google Places API key
     google-places: ${GOOGLE_PLACES_API_KEY:your-google-places-api-key-here}
-    # Ticketmaster API key (existing)
-    ticketmaster: ${TICKETMASTER_API_KEY:your-ticketmaster-api-key-here}
+    # Eventbrite API token (use personal OAuth token or App token)
+    eventbrite: ${EVENTBRITE_TOKEN:your-eventbrite-token-here}

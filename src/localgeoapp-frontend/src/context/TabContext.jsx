@@ -2,18 +2,18 @@ import { createContext, useState, useContext } from 'react';
 
 // Create context with default value
 const TabContext = createContext({
-  activeTab: 'explore', // Default tab
+  activeTab: 'artist', // Default to artist search
   setActiveTab: () => {},
 });
 
 // Provider component
 export function TabProvider({ children }) {
-  const [activeTab, setActiveTab] = useState('explore');
+  const [activeTab, setActiveTab] = useState('artist');
 
   return (
     <TabContext.Provider value={{ activeTab, setActiveTab }}>
       {children}
-    </TabContext.Provider>
+    </TabContext.Provider>t
   );
 }
 

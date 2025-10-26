@@ -109,6 +109,43 @@ const EventList = ({
                 {formatEventDate(event.startDate)}
               </p>
 
+              {/* Add availability and pricing information */}
+              {(event.minPrice || event.maxPrice) && (
+                <p className="event-card-price">
+                  <span className="text-sm font-medium">
+                    {event.minPrice && event.maxPrice ?
+                      `${event.currency || '$'}${event.minPrice} - ${event.currency || '$'}${event.maxPrice}` :
+                      event.minPrice ?
+                        `From ${event.currency || '$'}${event.minPrice}` :
+                        `Up to ${event.currency || '$'}${event.maxPrice}`
+                    }
+                  </span>
+                </p>
+              )}
+
+              {/* Show ticket availability status */}
+              {event.ticketStatus && (
+                <div className="mt-1">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    event.ticketStatus === 'onsale' ? 'bg-green-100 text-green-800' :
+                    event.ticketStatus === 'offsale' ? 'bg-red-100 text-red-800' :
+                    event.ticketStatus === 'presale' ? 'bg-blue-100 text-blue-800' :
+                    event.ticketStatus === 'rescheduled' ? 'bg-yellow-100 text-yellow-800' :
+                    event.ticketStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
+                    event.ticketStatus === 'postponed' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {event.ticketStatus === 'onsale' ? '🎫 Available' :
+                     event.ticketStatus === 'offsale' ? '❌ Sold Out' :
+                     event.ticketStatus === 'presale' ? '⏰ Pre-Sale' :
+                     event.ticketStatus === 'rescheduled' ? '📅 Rescheduled' :
+                     event.ticketStatus === 'cancelled' ? '🚫 Cancelled' :
+                     event.ticketStatus === 'postponed' ? '⏳ Postponed' :
+                     event.ticketStatusMessage || event.ticketStatus}
+                  </span>
+                </div>
+              )}
+
               {event.allStartTimes && event.allStartTimes.length > 1 && (
                 <div className="mt-2">
                   <p className="text-sm text-gray-600">

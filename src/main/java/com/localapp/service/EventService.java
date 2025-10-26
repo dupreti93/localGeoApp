@@ -1,346 +1,135 @@
 package com.localapp.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.localapp.util.DistanceUtil;
+import com.localapp.util.EventFilterUtil;
+import com.localapp.util.ParseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Service responsible for fetching and managing events from Ticketmaster API.
- */
 @Service
 public class EventService {
-    private static final Logger logger = LoggerFactory.getLogger(EventService.class);
-    private final AppConfigService appConfigService;
-    private final RestTemplate restTemplate;
-    private static final String TICKETMASTER_API = "https://app.ticketmaster.com/discovery/v2/events.json";
-    private static final String TICKETMASTER_EVENT_API = "https://app.ticketmaster.com/discovery/v2/events/";
-    // Add Commerce API endpoints for availability data
-    private static final String TICKETMASTER_COMMERCE_API = "https://app.ticketmaster.com/commerce/v2/events/";
-    private static final String TICKETMASTER_INVENTORY_API = "https://app.ticketmaster.com/inventory-status/v1/availability/";
+    private static final Logger log = LoggerFactory.getLogger(EventService.class);
+    private static final String API_BASE = "https://www.eventbriteapi.com/v3";
+    private final AppConfigService config;
+    private final RestTemplate http;
+    private final ObjectMapper json = new ObjectMapper();
 
-    /**
-     * Constructs a new EventService with the required AppConfigService for API key management.
-     * @param appConfigService Service to retrieve API keys from AWS AppConfig
-     * @param restTemplate RestTemplate instance for making API calls
-     */
-    public EventService(AppConfigService appConfigService, RestTemplate restTemplate) {
-        this.appConfigService = appConfigService;
-        this.restTemplate = restTemplate;
+    public EventService(AppConfigService config, RestTemplate http) {
+        this.config = config;
+        this.http = http;
     }
 
-    /**
-     * Fetches events from Ticketmaster API for a specific city and date.
-     *
-     * @param city The city to search events in
-     * @param date The start date for events (format: YYYY-MM-DD)
-     * @return List of events as maps containing event details
-     * @throws RuntimeException if there's an error fetching events
-     */
     public List<Map<String, Object>> fetchEvents(String city, String date) {
-        return fetchEvents(city, date, "relevance,desc", null);
+        return fetchEvents(city, date, null, null);
     }
 
-    /**
-     * Fetches events from Ticketmaster API for a specific city and date with custom sorting.
-     *
-     * @param city The city to search events in
-     * @param date The start date for events (format: YYYY-MM-DD)
-     * @param sort The sort order (options: relevance,desc; date,asc; date,desc; name,asc; name,desc; venueName,asc)
-     * @return List of events as maps containing event details
-     * @throws RuntimeException if there's an error fetching events
-     */
-    public List<Map<String, Object>> fetchEvents(String city, String date, String sort) {
-        return fetchEvents(city, date, sort, null);
-    }
-
-    /**
-     * Fetches events from Ticketmaster API for a specific city, date, with custom sorting and keyword filtering.
-     *
-     * @param city The city to search events in
-     * @param date The start date for events (format: YYYY-MM-DD)
-     * @param sort The sort order (options: relevance,desc; date,asc; date,desc; name,asc; name,desc; venueName,asc)
-     * @param artist The artist/performer name or event name to filter by (can be null for no filtering)
-     * @return List of events as maps containing event details
-     * @throws RuntimeException if there's an error fetching events
-     */
     public List<Map<String, Object>> fetchEvents(String city, String date, String sort, String artist) {
+        String token = config.getEventbriteToken();
+        if (token == null || token.isEmpty()) return List.of();
+        return callAPI(token, city, date + "T00:00:00Z", date + "T23:59:59Z", artist);
+    }
+
+    public List<Map<String, Object>> searchFutureEventsByArtist(String artist) {
+        return fetchEvents("", Instant.now().atZone(ZoneOffset.UTC).toLocalDate().toString(), null, artist);
+    }
+
+    public List<Map<String, Object>> fetchTonightEvents(String city, Double lat, Double lon, String mood) {
+        String token = config.getEventbriteToken();
+        if (token == null || token.isEmpty()) return List.of();
+
+        Instant now = Instant.now();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
+        List<Map<String, Object>> events = callAPI(token, city, fmt.format(now), fmt.format(now.plusSeconds(8 * 3600)), null);
+
+        // Add distance
+        if (lat != null && lon != null) {
+            events.forEach(e -> {
+                Double eLat = ParseUtil.dbl(e.get("latitude")), eLon = ParseUtil.dbl(e.get("longitude"));
+                if (eLat != null && eLon != null) {
+                    double d = DistanceUtil.haversine(lat, lon, eLat, eLon);
+                    e.put("distanceMiles", Math.round(d * 10.0) / 10.0);
+                    e.put("driveTimeMin", DistanceUtil.estimateDrive(d));
+                    e.put("walkTimeMin", DistanceUtil.estimateWalk(d));
+                }
+            });
+        }
+
+        // Filter distance & mood
+        events = events.stream()
+            .filter(e -> ParseUtil.dbl(e.get("distanceMiles")) == null || ParseUtil.dbl(e.get("distanceMiles")) <= 25.0)
+            .filter(e -> EventFilterUtil.matchMood(e, mood))
+            .sorted(Comparator.comparing((Map<String, Object> e) -> ParseUtil.parseTime((String) e.get("startDate")))
+                .thenComparing(e -> ParseUtil.dbl(e.get("distanceMiles")) != null ? ParseUtil.dbl(e.get("distanceMiles")) : Double.MAX_VALUE))
+            .collect(Collectors.toList());
+
+        return events;
+    }
+
+    private List<Map<String, Object>> callAPI(String token, String city, String start, String end, String query) {
         try {
-            String apiKey = appConfigService.getTicketmasterApiKey();
-            // Only log high-level info
-            logger.info("Calling Ticketmaster API for city: {}, date: {}, sort: {}, artist: {}", city, date, sort, artist);
+            StringBuilder url = new StringBuilder(API_BASE + "/events/search/?expand=venue,logo");
+            if (city != null && !city.isEmpty())
+                url.append("&location.address=").append(java.net.URLEncoder.encode(city, java.nio.charset.StandardCharsets.UTF_8));
+            url.append("&start_date.range_start=").append(java.net.URLEncoder.encode(start, java.nio.charset.StandardCharsets.UTF_8));
+            url.append("&start_date.range_end=").append(java.net.URLEncoder.encode(end, java.nio.charset.StandardCharsets.UTF_8));
+            if (query != null && !query.trim().isEmpty())
+                url.append("&q=").append(java.net.URLEncoder.encode(query, java.nio.charset.StandardCharsets.UTF_8));
+            url.append("&page_size=200");
 
-            // Build URL with properly encoded parameters
-            StringBuilder urlBuilder = new StringBuilder(TICKETMASTER_API);
-            urlBuilder.append("?apikey=").append(apiKey);
-            urlBuilder.append("&city=").append(java.net.URLEncoder.encode(city, java.nio.charset.StandardCharsets.UTF_8.name()));
-            urlBuilder.append("&startDateTime=").append(date).append("T00:00:00Z");
-            urlBuilder.append("&endDateTime=").append(date).append("T23:59:59Z");
-            urlBuilder.append("&size=200");
-            urlBuilder.append("&sort=").append(sort);
+            JsonNode root = json.readTree(callRaw(token, url.toString()));
+            JsonNode events = root.path("events");
 
-            // Add artist filter if provided
-            if (artist != null && !artist.trim().isEmpty()) {
-                urlBuilder.append("&keyword=").append(java.net.URLEncoder.encode(artist, java.nio.charset.StandardCharsets.UTF_8.name()));
-            }
-
-            String url = urlBuilder.toString();
-
-            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-            String responseBody = response.getBody();
-
-            if (response.getStatusCode().is2xxSuccessful() && responseBody != null) {
-                ObjectMapper mapper = new ObjectMapper();
-                Map<String, Object> body = mapper.readValue(responseBody, Map.class);
-
-                if (body.containsKey("_embedded") && ((Map)body.get("_embedded")).containsKey("events")) {
-                    List<Map<String, Object>> events = (List<Map<String, Object>>) ((Map)body.get("_embedded")).get("events");
-                    return events.stream().map(event -> {
-                        Map<String, Object> transformed = new HashMap<>();
-                        transformed.put("id", event.get("id"));
-                        transformed.put("name", event.get("name"));
-                        transformed.put("url", event.get("url"));
-                        transformed.put("type", event.get("type"));
-
-                        // Extract keywords information if available
-                        List<String> keywords = extractKeywords(event);
-                        if (!keywords.isEmpty()) {
-                            transformed.put("keywords", keywords);
-                        }
-
-                        if (event.containsKey("_embedded")) {
-                            Map embedded = (Map)event.get("_embedded");
-                            if (embedded.containsKey("venues")) {
-                                List<Map> venues = (List<Map>)embedded.get("venues");
-                                if (!venues.isEmpty()) {
-                                    Map venue = venues.get(0);
-                                    transformed.put("venue", venue.get("name"));
-                                    if (venue.containsKey("location")) {
-                                        Map location = (Map)venue.get("location");
-                                        transformed.put("latitude", location.get("latitude"));
-                                        transformed.put("longitude", location.get("longitude"));
-                                    }
-                                }
-                            }
-                        }
-                        if (event.containsKey("dates") && ((Map)event.get("dates")).containsKey("start")) {
-                            Map dates = (Map)event.get("dates");
-                            Map start = (Map)dates.get("start");
-                            transformed.put("startDate", start.get("dateTime"));
-                        }
-                        if (event.containsKey("priceRanges")) {
-                            List<Map> priceRanges = (List<Map>)event.get("priceRanges");
-                            if (!priceRanges.isEmpty()) {
-                                Map priceRange = priceRanges.get(0);
-                                transformed.put("minPrice", priceRange.get("min"));
-                                transformed.put("maxPrice", priceRange.get("max"));
-                                transformed.put("currency", priceRange.get("currency"));
-                            }
-                        }
-                        // Add image support from Ticketmaster API
-                        if (event.containsKey("images")) {
-                            List<Map> images = (List<Map>)event.get("images");
-                            logger.info("Found {} images for event: {}", images.size(), event.get("name"));
-                            if (!images.isEmpty()) {
-                                // Get the first image or find a suitable one
-                                Map bestImage = images.stream()
-                                    .filter(img -> img.containsKey("url"))
-                                    .findFirst()
-                                    .orElse(images.get(0));
-                                String imageUrl = (String) bestImage.get("url");
-                                transformed.put("image", imageUrl);
-                                logger.info("Added image URL: {} for event: {}", imageUrl, event.get("name"));
-
-                                List<String> imageUrls = images.stream()
-                                    .filter(img -> img.containsKey("url"))
-                                    .map(img -> (String) img.get("url"))
-                                    .collect(Collectors.toList());
-                                transformed.put("images", imageUrls);
-                            }
-                        } else {
-                            logger.warn("No images found for event: {}", event.get("name"));
-                        }
-                        return transformed;
-                    }).collect(Collectors.toList());
+            Map<String, Map<String, Object>> unique = new HashMap<>();
+            if (events.isArray()) {
+                for (JsonNode ev : events) {
+                    Map<String, Object> parsed = parse(ev);
+                    String key = ParseUtil.str(parsed.get("name")) + "|" + ParseUtil.str(parsed.get("startDate")) + "|" + ParseUtil.str(parsed.get("venue"));
+                    unique.putIfAbsent(key.toLowerCase(), parsed);
                 }
             }
-            logger.warn("No events found in response");
-            return new ArrayList<>();
-        } catch (HttpClientErrorException e) {
-            logger.error("HTTP error from Ticketmaster: Status={}, Body={}, Headers={}",
-                e.getStatusCode(), e.getResponseBodyAsString(), e.getResponseHeaders());
-            throw new RuntimeException("Failed to fetch events: " + e.getResponseBodyAsString(), e);
+            return new ArrayList<>(unique.values());
         } catch (Exception e) {
-            logger.error("Error class: {}, Message: {}", e.getClass().getName(), e.getMessage());
-            throw new RuntimeException("Failed to fetch events: " + e.getMessage(), e);
+            log.error("API call failed: {}", e.getMessage());
+            return List.of();
         }
     }
 
-    /**
-     * Fetches a specific event by its ID from Ticketmaster API and returns it as a Map.
-     *
-     * @param eventId The Ticketmaster event ID
-     * @return Map with event details, or null if not found
-     * @throws RuntimeException if there's an error fetching the event
-     */
-    public Map<String, Object> getEventById(String eventId) {
-        try {
-            String apiKey = appConfigService.getTicketmasterApiKey();
-            logger.info("Fetching event details for ID: {}", eventId);
-
-            String url = TICKETMASTER_EVENT_API + eventId + "?apikey=" + apiKey;
-
-            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-            String responseBody = response.getBody();
-
-            if (response.getStatusCode().is2xxSuccessful() && responseBody != null) {
-                ObjectMapper mapper = new ObjectMapper();
-                Map<String, Object> eventData = mapper.readValue(responseBody, Map.class);
-
-                Map<String, Object> event = new HashMap<>();
-                event.put("id", eventData.get("id"));
-                event.put("name", eventData.get("name"));
-                event.put("url", eventData.get("url"));
-                event.put("type", eventData.get("type"));
-
-                // Extract venue information
-                if (eventData.containsKey("_embedded")) {
-                    Map embedded = (Map) eventData.get("_embedded");
-                    if (embedded.containsKey("venues")) {
-                        List<Map> venues = (List<Map>) embedded.get("venues");
-                        if (!venues.isEmpty()) {
-                            Map venue = venues.get(0);
-                            event.put("venue", venue.get("name"));
-
-                            if (venue.containsKey("city")) {
-                                Map cityData = (Map) venue.get("city");
-                                event.put("city", cityData.get("name"));
-                            }
-
-                            if (venue.containsKey("location")) {
-                                Map location = (Map) venue.get("location");
-                                event.put("latitude", location.get("latitude"));
-                                event.put("longitude", location.get("longitude"));
-                            }
-                        }
-                    }
-                }
-
-                // Extract date information
-                if (eventData.containsKey("dates") && ((Map) eventData.get("dates")).containsKey("start")) {
-                    Map dates = (Map) eventData.get("dates");
-                    Map start = (Map) dates.get("start");
-                    event.put("startDate", start.get("dateTime"));
-                }
-
-                // Extract price range information
-                if (eventData.containsKey("priceRanges")) {
-                    List<Map> priceRanges = (List<Map>) eventData.get("priceRanges");
-                    if (!priceRanges.isEmpty()) {
-                        Map priceRange = priceRanges.get(0);
-                        event.put("minPrice", priceRange.get("min"));
-                        event.put("maxPrice", priceRange.get("max"));
-                        event.put("currency", priceRange.get("currency"));
-                    }
-                }
-
-                // Extract image information
-                if (eventData.containsKey("images")) {
-                    List<Map> images = (List<Map>) eventData.get("images");
-                    if (!images.isEmpty()) {
-                        Map bestImage = images.stream()
-                            .filter(img -> img.containsKey("url"))
-                            .findFirst()
-                            .orElse(images.get(0));
-                        String imageUrl = (String) bestImage.get("url");
-                        event.put("image", imageUrl);
-
-                        List<String> imageUrls = images.stream()
-                            .filter(img -> img.containsKey("url"))
-                            .map(img -> (String) img.get("url"))
-                            .collect(Collectors.toList());
-                        event.put("images", imageUrls);
-                    }
-                }
-
-                // Extract description or info
-                if (eventData.containsKey("info")) {
-                    event.put("description", eventData.get("info"));
-                } else if (eventData.containsKey("description")) {
-                    event.put("description", eventData.get("description"));
-                }
-
-                // Extract keywords
-                List<String> keywords = extractKeywords(eventData);
-                event.put("keywords", keywords);
-
-                return event;
-            } else {
-                logger.warn("Event not found with ID: {}", eventId);
-                return null;
-            }
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode().value() == 404) {
-                logger.warn("Event not found with ID: {}", eventId);
-                return null;
-            }
-            logger.error("HTTP error from Ticketmaster: Status={}, Body={}",
-                e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("Failed to fetch event: " + e.getResponseBodyAsString(), e);
-        } catch (Exception e) {
-            logger.error("Error fetching event with ID {}: {}", eventId, e.getMessage(), e);
-            throw new RuntimeException("Failed to fetch event: " + e.getMessage(), e);
-        }
+    private String callRaw(String token, String url) throws Exception {
+        HttpHeaders h = new HttpHeaders();
+        h.setBearerAuth(token);
+        h.setAccept(List.of(MediaType.APPLICATION_JSON));
+        return http.exchange(url, HttpMethod.GET, new HttpEntity<>(h), String.class).getBody();
     }
 
-    /**
-     * Extract keyword information from event data returned by Ticketmaster API.
-     * Keywords include artist names and the event name itself for broader searching.
-     *
-     * @param event The event map from Ticketmaster API
-     * @return List of keyword strings
-     */
-    private List<String> extractKeywords(Map<String, Object> event) {
-        List<String> keywords = new ArrayList<>();
+    private Map<String, Object> parse(JsonNode ev) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("id", ev.path("id").asText(null));
+        m.put("name", ev.path("name").path("text").asText(ev.path("name").asText(null)));
+        m.put("url", ev.path("url").asText(null));
+        m.put("startDate", ev.path("start").path("utc").asText(ev.path("start").path("local").asText(null)));
+        m.put("image", ev.path("logo").path("url").asText(null));
 
-        try {
-            // Primary source: _embedded.attractions
-            if (event.containsKey("_embedded")) {
-                Map embedded = (Map)event.get("_embedded");
-                if (embedded.containsKey("attractions")) {
-                    List<Map> attractions = (List<Map>) embedded.get("attractions");
-
-                    if (attractions != null && !attractions.isEmpty()) {
-                        attractions.forEach(attraction -> {
-                            if (attraction.containsKey("name")) {
-                                String artistName = (String) attraction.get("name");
-                                keywords.add(artistName);
-                            }
-                        });
-                    }
-                }
+        JsonNode v = ev.path("venue");
+        if (!v.isMissingNode()) {
+            m.put("venue", v.path("name").asText(null));
+            JsonNode a = v.path("address");
+            if (!a.isMissingNode()) {
+                m.put("city", a.path("city").asText(null));
+                m.put("latitude", ParseUtil.dbl(a.path("latitude").asText(null)));
+                m.put("longitude", ParseUtil.dbl(a.path("longitude").asText(null)));
             }
-
-            // Add event name as a keyword
-            if (event.containsKey("name")) {
-                String eventName = (String) event.get("name");
-                keywords.add(eventName);
-            }
-        } catch (Exception e) {
-            logger.warn("Error extracting keyword information for event: {}",
-                event.getOrDefault("name", "Unknown event"));
         }
-
-        return keywords;
+        return m;
     }
 }
-

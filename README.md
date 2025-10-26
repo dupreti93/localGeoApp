@@ -27,6 +27,9 @@ java -jar /home/ec2-user/localGeoApp/target/localGeoApp-1.0-SNAPSHOT.jar
 sudo systemctl start amazon-cloudwatch-agent
 sudo systemctl status amazon-cloudwatch-agent
 
+### To kill a ec2 linux process
+sudo kill -9 $(sudo lsof -t -i:8080)
+
 
 
 

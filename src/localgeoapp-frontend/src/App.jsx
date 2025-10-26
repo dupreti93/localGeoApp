@@ -1,8 +1,7 @@
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { TabProvider, useTab } from './context/TabContext.jsx';
-import { EventsProvider } from './context/EventsContext.jsx';
-import Home from './pages/Home.jsx';
+import ArtistSearch from './pages/ArtistSearch.jsx';
 import MyTravel from './pages/MyTravel.jsx';
 import Nav from './pages/shared/Nav.jsx';
 import BottomTray from './pages/shared/BottomTray.jsx';
@@ -16,8 +15,8 @@ function AppContent() {
       <div className="app-flex-container">
         <Nav />
         <main className="flex-1">
-          <div style={{ display: activeTab === 'explore' ? 'block' : 'none', height: '100%' }}>
-            <Home />
+          <div style={{ display: activeTab === 'artist' ? 'block' : 'none', height: '100%' }}>
+            <ArtistSearch />
           </div>
           <div style={{ display: activeTab === 'mytravel' ? 'block' : 'none', height: '100%' }}>
             <MyTravel />
@@ -33,11 +32,9 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <EventsProvider>
-          <TabProvider>
-            <AppContent />
-          </TabProvider>
-        </EventsProvider>
+        <TabProvider>
+          <AppContent />
+        </TabProvider>
       </BrowserRouter>
     </AuthProvider>
   );

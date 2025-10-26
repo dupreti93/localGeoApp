@@ -56,9 +56,12 @@ const TileLayerWithStyleChange = ({ style }) => {
   );
 };
 
-const TravelMap = ({ mapCenter, savedEvents }) => {
+const TravelMap = ({ mapCenter, savedEvents = [] }) => {
   const mapRef = useRef(null);
   const [mapStyle, setMapStyle] = useState('cartoLight'); // Default to CARTO Light
+
+  // Ensure savedEvents is always an array
+  const eventsToDisplay = savedEvents || [];
 
   return (
     <div className="travel-map-container">
@@ -87,7 +90,7 @@ const TravelMap = ({ mapCenter, savedEvents }) => {
         <TileLayerWithStyleChange style={mapStyle} />
         <MapUpdater center={mapCenter} />
 
-        {savedEvents.map((event) => (
+        {eventsToDisplay.map((event) => (
           <Marker
             key={event.id}
             position={[parseFloat(event.latitude), parseFloat(event.longitude)]}
